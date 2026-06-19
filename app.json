@@ -1,16 +1,18 @@
 {
   "expo": {
-    "name": "work-app",
-    "slug": "work-app",
+    "name": "status",
+    "slug": "status",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "workapp",
+    "scheme": "status",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "bundleIdentifier": "kz.hanikonake.status",
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "kz.hanikonake.status",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
