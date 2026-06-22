@@ -1,4 +1,9 @@
-import {account} from "@/lib/appwrite";
+import {
+  account,
+  database_id,
+  profiles_table_id,
+  tablesDB,
+} from "@/lib/appwrite";
 import React, {createContext, useContext, useEffect, useState} from "react";
 import {ID, Models} from "react-native-appwrite";
 
@@ -26,35 +31,52 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
       } catch {
         setUser(null);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
-    loadUser()
+    };
+    loadUser();
   }, []);
 
   const login = async (email: string, password: string) => {
-    await account.createEmailPasswordSession(email, password)
-    const loggedInUser = await account.get()
-    setUser(loggedInUser)
-  }
+    await account.createEmailPasswordSession(email, password);
+    const loggedInUser = await account.get();
+    setUser(loggedInUser);
+  };
   const register = async (email: string, password: string, name: string) => {
-    await account.create({ userId: ID.unique(), email, password, name})
-    await login(email, password)
-  }
+    const newUser = await account.create({
+      userId: ID.unique(),
+      email,
+      password,
+      name,
+    });
+    await login(email, password);
+    await tablesDB.createRow({
+      databaseId: database_id,
+      tableId: profiles_table_id,
+      rowId: ID.unique(),
+      data: {
+        userId: newUser.$id,
+        nickname: name,
+        avatarURL: "",
+        statusEmoji: "🤔",
+        statusText: "Неизвестно",
+      },
+    });
+  };
   const logOut = async () => {
-    await account.deleteSession({sessionId: 'current'})
-    setUser(null)
-  }
+    await account.deleteSession({sessionId: "current"});
+    setUser(null);
+  };
 
   return (
     <AuthContext.Provider value={{user, isLoading, login, register, logOut}}>
-        {children}
+      {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
 export function useAuth() {
-    const context = useContext(AuthContext)
-    if (!context) throw new Error("useAuth must be used within an AuthProvider")
-    return context
+  const context = useContext(AuthContext);
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
+  return context;
 }

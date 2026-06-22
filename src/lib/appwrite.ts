@@ -6,3 +6,5 @@ export const client = new Client()
   .setPlatform(process.env.EXPO_PUBLIC_APPWRITE_PLATFORM!);
 export const account = new Account(client);
 export const tablesDB = new TablesDB(client);
+export const database_id = process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!
+export const profiles_table_id = process.env.EXPO_PUBLIC_APPWRITE_PROFILES_TABLE_ID!
