@@ -5,7 +5,7 @@ import {
   tablesDB,
 } from "@/lib/appwrite";
 import React, {createContext, useContext, useEffect, useState} from "react";
-import {ID, Models} from "react-native-appwrite";
+import {ID, Models, Permission, Role} from "react-native-appwrite";
 
 type AuthContextType = {
   user: Models.User<Models.Preferences> | null;
@@ -53,14 +53,18 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
     await tablesDB.createRow({
       databaseId: database_id,
       tableId: profiles_table_id,
-      rowId: ID.unique(),
+      rowId: newUser.$id,
       data: {
-        userId: newUser.$id,
         nickname: name,
         avatarURL: "",
         statusEmoji: "🤔",
         statusText: "Неизвестно",
+        statusUpdatedAt: new Date().toISOString(),
       },
+      permissions: [
+        Permission.update(Role.user(newUser.$id)),
+        Permission.delete(Role.user(newUser.$id)),
+      ],
     });
   };
   const logOut = async () => {
