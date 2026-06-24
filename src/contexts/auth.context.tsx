@@ -11,7 +11,7 @@ type AuthContextType = {
   user: Models.User<Models.Preferences> | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
+  register: (email: string, password: string, nickname: string, name: string) => Promise<void>;
   logOut: () => Promise<void>;
 };
 
@@ -42,12 +42,12 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
     const loggedInUser = await account.get();
     setUser(loggedInUser);
   };
-  const register = async (email: string, password: string, name: string) => {
+  const register = async (email: string, password: string, nickname: string, name: string) => {
     const newUser = await account.create({
       userId: ID.unique(),
       email,
       password,
-      name,
+      name
     });
     await login(email, password);
     await tablesDB.createRow({
@@ -55,7 +55,8 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
       tableId: profiles_table_id,
       rowId: newUser.$id,
       data: {
-        nickname: name,
+        nickname: nickname,
+        name: name,
         avatarURL: "",
         statusEmoji: "🤔",
         statusText: "Неизвестно",

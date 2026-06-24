@@ -7,6 +7,7 @@ import {SafeAreaView} from "react-native-safe-area-context";
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [nickname, setNickname] = useState("");
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -16,7 +17,7 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     setIsSubmitting(true);
     try {
-      await register(email, password, name);
+      await register(email, password, nickname, name);
     } catch (err) {
       console.error(err);
       setError("Register failed. Please check all fields");
@@ -39,6 +40,13 @@ export default function RegisterScreen() {
           placeholder="password"
           onChangeText={setPassword}
           secureTextEntry
+          autoCapitalize="none"
+        />
+      </View>
+      <View>
+        <TextInput
+          placeholder="nickname"
+          onChangeText={setNickname}
           autoCapitalize="none"
         />
       </View>
