@@ -5,15 +5,13 @@ import {
   profiles_table_id,
   tablesDB,
 } from "@/lib/appwrite";
-import { useRouter } from "expo-router";
-import {useEffect, useState} from "react";
-import {Button, Image, Pressable, StyleSheet, Text, TextInput, View} from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import {useCallback, useEffect, useState} from "react";
+import {Button, Pressable, StyleSheet, Text, TextInput, View} from "react-native";
 import {ID, Models, Query} from "react-native-appwrite";
 import {SafeAreaView} from "react-native-safe-area-context";
 
 export default function FriendsScreen() {
-  const [searchText, setSearchText] = useState("");
-  const [error, setError] = useState("");
   const [requests, setRequests] = useState<Models.DefaultRow[]>([]);
   const [friendList, setFriendList] = useState<Models.DefaultRow[]>([]);
   const [friendsProfiles, setFriendsProfiles] = useState<Models.DefaultRow[]>(
@@ -24,10 +22,12 @@ export default function FriendsScreen() {
 
   const router = useRouter()
 
-  useEffect(() => {
-    fetchRequests();
-    fetchFriendList();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchRequests()
+      fetchFriendList()
+    }, [])
+  )
 
   useEffect(() => {
     if (friendList.length === 0) {
@@ -41,28 +41,6 @@ export default function FriendsScreen() {
     return null;
   }
 
-  const handleSendRequest = async (searchText: string) => {
-    try {
-    const searchResult = await tablesDB.listRows({
-      databaseId: database_id,
-      tableId: profiles_table_id,
-      queries: [Query.equal("nickname", searchText)],
-    });
-
-    tablesDB.createRow({
-      databaseId: database_id,
-      tableId: friendship_table_id,
-      rowId: ID.unique(),
-      data: {
-        requesterId: user.$id,
-        addresseeId: searchResult.rows[0].$id,
-        status: "pending",
-      },
-    })} catch {
-        setError("Пользователь не найден")
-    }
-  };
-
   const fetchRequests = async () => {
     const fetchRequestsResult = await tablesDB.listRows({
       databaseId: database_id,
@@ -75,7 +53,7 @@ export default function FriendsScreen() {
     setRequests(fetchRequestsResult.rows);
   };
 
-  const handleAcceprRequest = async (rowID: string, requesterID: string) => {
+  const handleAcceptRequest = async (rowID: string, requesterID: string) => {
     tablesDB.updateRow({
       databaseId: database_id,
       tableId: friendship_table_id,
@@ -122,44 +100,97 @@ export default function FriendsScreen() {
   };
 
   return (
-    <SafeAreaView>
-      <View>
-        <Text>Друзья</Text>
-        <Text>{friendList.length}</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Друзья {friendList.length}</Text>
         <Button title="+ Добавить" onPress={() => router.push('/(app)/friends/add-friend')}/>
       </View>
-      <View>
-        <TextInput placeholder="Поиск (still in work)" />
+      <View style={styles.searchBar}>
+        <TextInput placeholder="Поиск" />
       </View>
-      <View>
-        <Pressable>
-          <Text>Входящие заявки</Text>
-          <Text>{requests.length} хотят дружить</Text>
-        </Pressable>
-      </View>
-      <Text>ВСЕ ДРУЗЬЯ</Text>
+      <Pressable style={styles.requestsCard} onPress={() => router.push('/(app)/friends/requests')}>
+        <Text>Входящие заявки</Text>
+        <Text style={{color: '#999'}}>{requests.length} хотят дружить</Text>
+      </Pressable>
+      <Text style={styles.sectionLabel}>Все друзья</Text>
       <View>
         {friendsProfiles.map((friend) => (
-          <View key={friend.$id}>
-            <View>
-              <Image source={{uri: friend.avatarURL}} />
+          <View key={friend.$id} style={styles.friendCard}>
+            <View style={styles.avatar} />
+            <View style={{flex: 1}}>
+              <Text>{friend.name as string}</Text>
+              <Text style={{color: '#999', fontSize: 13}}>@{friend.nickname as string}</Text>
             </View>
-            <View>
-              <Text>{friend.name}</Text>
-              <Text>{friend.nickname}</Text>
-            </View>
-            <View>
-              <Text>{friend.statusEmoji}</Text>
-              <Text>{friend.statusText}</Text>
-            </View>
+            <Text style={{fontSize: 13, color: '#666'}}>{friend.statusEmoji as string} {friend.statusText as string}</Text>
           </View>
         ))}
-        <Text>Смахни влево, чтобы удалить друга</Text>
+        <Text style={styles.hint}>Смахни влево, чтобы удалить друга</Text>
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  
+  container: {flex: 1, backgroundColor: "#f5f5f5"},
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  title: {fontSize: 22, fontWeight: "700"},
+  searchBar: {
+    marginHorizontal: 16,
+    height: 44,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    justifyContent: "center",
+  },
+  requestsCard: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  sectionLabel: {
+    marginHorizontal: 16,
+    marginTop: 14,
+    marginBottom: 8,
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    color: "#999",
+  },
+  friendCard: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 12,
+    padding: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 999,
+    backgroundColor: "#e8e8e8",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  hint: {textAlign: "center", fontSize: 12, color: "#aaa", marginTop: 8},
 })
