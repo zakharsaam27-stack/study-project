@@ -1,6 +1,7 @@
 import {useAuth} from "@/contexts/auth.context";
 import {database_id, profiles_table_id, tablesDB} from "@/lib/appwrite";
-import {useEffect, useState} from "react";
+import { useFocusEffect } from "expo-router";
+import {useCallback, useEffect, useState} from "react";
 import {Pressable, StyleSheet, Text, View} from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
 
@@ -10,8 +11,9 @@ export default function MyStatusScreen() {
   const [statusText, setStatusText] = useState("Неизвестно");
   const [statusUpdatedAt, setStatusUpdatedAt] = useState("");
 
-  useEffect(() => {
-    const fetchCurrentStatus = async () => {
+  useFocusEffect(
+    useCallback(() => {
+      const fetchCurrentStatus = async () => {
       if (!user) {
         return null;
       }
@@ -29,16 +31,16 @@ export default function MyStatusScreen() {
       }
     };
     fetchCurrentStatus();
-  }, []);
+    }, []))
 
   if (!user) {
     return null;
   }
-  
+
   const handleChangeStatus = async (emoji: string, text: string) => {
     try {
       const now = new Date().toISOString()
-      
+
       setStatusEmoji(emoji);
       setStatusText(text);
       setStatusUpdatedAt(now)
@@ -196,4 +198,3 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
 });
-

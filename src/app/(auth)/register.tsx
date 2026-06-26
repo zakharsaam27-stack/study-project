@@ -17,6 +17,10 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     setIsSubmitting(true);
     try {
+      if (nickname.includes(' ')) {
+        setError("Никнейм не должен содержать пробелы")
+        return
+      }
       await register(email, password, nickname, name);
     } catch (err) {
       console.error(err);

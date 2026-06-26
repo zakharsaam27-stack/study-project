@@ -14,7 +14,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import {ID, Permission, Query, Role} from "react-native-appwrite";
+import {ID, Query, Role} from "react-native-appwrite";
 import {SafeAreaView} from "react-native-safe-area-context";
 
 export default function AddFriendScreen() {
@@ -32,6 +32,19 @@ export default function AddFriendScreen() {
     return null;
   }
 
+  const checkReqAlreadySent = async (
+    addresseeId: string
+  ) => {
+    const checkReq = await tablesDB.listRows({
+      databaseId: database_id,
+      tableId: friendship_table_id,
+      queries: [
+        Query.equal('requesterId', user.$id),
+        Query.equal('addresseeId', addresseeId)
+      ]
+    });
+  };
+
   const handleSendRequest = async (searchText: string) => {
     try {
       const searchResult = await tablesDB.listRows({
@@ -43,6 +56,20 @@ export default function AddFriendScreen() {
       if (searchResult.rows[0].$id === user.$id) {
         setError("Вы не можете добавить себя в друзья");
         return;
+      }
+      
+      const checkReq = await tablesDB.listRows({
+        databaseId: database_id,
+        tableId: friendship_table_id,
+        queries: [
+          Query.equal('requesterId', user.$id),
+          Query.equal('addresseeId', searchResult.rows[0].$id)
+        ]
+      });
+      
+      if (checkReq.total > 0) {
+        setError("Заявка уже отправлена")
+        return
       }
 
       tablesDB.createRow({
@@ -80,7 +107,7 @@ export default function AddFriendScreen() {
       <View style={styles.section}>
         <Button
           title="Отправить заявку"
-          onPress={() => handleSendRequest(searchText)}
+          onPress={() => handleSendRequest(searchText.trim())}
         />
         {requestSent && <Text style={styles.success}>Заявка отправлена!</Text>}
         {error && <Text style={styles.error}>{error}</Text>}
@@ -91,8 +118,8 @@ export default function AddFriendScreen() {
         <View style={styles.dividerLine} />
       </View>
       <View style={styles.section}>
-        <Button title="Скопировать ссылку" />
-        <Button title="Поделиться ссылкой" />
+        <Button title="Скопировать ссылку (Coming soon)" />
+        <Button title="Поделиться ссылкой (Coming soon)" />
       </View>
     </SafeAreaView>
   );

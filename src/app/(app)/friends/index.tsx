@@ -53,27 +53,6 @@ export default function FriendsScreen() {
     setRequests(fetchRequestsResult.rows);
   };
 
-  const handleAcceptRequest = async (rowID: string, requesterID: string) => {
-    tablesDB.updateRow({
-      databaseId: database_id,
-      tableId: friendship_table_id,
-      rowId: rowID,
-      data: {
-        status: "accepted",
-      },
-    });
-    tablesDB.createRow({
-      databaseId: database_id,
-      tableId: friendship_table_id,
-      rowId: ID.unique(),
-      data: {
-        requesterId: user.$id,
-        addresseeId: requesterID,
-        status: "accepted",
-      },
-    });
-  };
-
   const fetchFriendList = async () => {
     const fetchFriendListResult = await tablesDB.listRows({
       databaseId: database_id,
@@ -106,7 +85,7 @@ export default function FriendsScreen() {
         <Button title="+ Добавить" onPress={() => router.push('/(app)/friends/add-friend')}/>
       </View>
       <View style={styles.searchBar}>
-        <TextInput placeholder="Поиск" />
+        <TextInput placeholder="Поиск" autoCapitalize="none"/>
       </View>
       <Pressable style={styles.requestsCard} onPress={() => router.push('/(app)/friends/requests')}>
         <Text>Входящие заявки</Text>

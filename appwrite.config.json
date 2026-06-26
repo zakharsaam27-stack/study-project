@@ -1,0 +1,212 @@
+{
+    "organizationId": "6a29163d00126b4522be",
+    "projectId": "6a33d68a002938a4bcc3",
+    "projectName": "project-2",
+    "endpoint": "https://fra.cloud.appwrite.io/v1",
+    "settings": {
+        "services": {
+            "account": true,
+            "avatars": true,
+            "databases": true,
+            "locale": true,
+            "health": true,
+            "storage": true,
+            "teams": true,
+            "users": true,
+            "sites": true,
+            "functions": true,
+            "graphql": true,
+            "messaging": true
+        },
+        "protocols": {
+            "rest": true,
+            "graphql": true,
+            "websocket": true
+        },
+        "auth": {
+            "methods": {
+                "jwt": true,
+                "phone": true,
+                "invites": true,
+                "anonymous": true,
+                "email-otp": true,
+                "magic-url": true,
+                "email-password": true
+            },
+            "security": {
+                "duration": 31536000,
+                "limit": null,
+                "sessionsLimit": null,
+                "passwordHistory": null,
+                "passwordDictionary": false,
+                "personalDataCheck": false,
+                "sessionAlerts": false,
+                "mockNumbers": []
+            }
+        }
+    },
+    "functions": [
+        {
+            "$id": "accept-friend-request",
+            "name": "accept-friend-request",
+            "runtime": "node-22",
+            "execute": [
+                "users"
+            ],
+            "events": [],
+            "schedule": "",
+            "timeout": 15,
+            "enabled": true,
+            "logging": true,
+            "entrypoint": "src/main.js",
+            "commands": "npm install",
+            "path": "functions/accept-friend-request"
+        },
+        {
+            "$id": "6a3e3a830027962d115e",
+            "name": "reject-friend-request",
+            "runtime": "node-22",
+            "buildSpecification": "s-2vcpu-2gb",
+            "runtimeSpecification": "s-0.5vcpu-512mb",
+            "execute": [
+                "any"
+            ],
+            "events": [],
+            "scopes": [
+                "users.read"
+            ],
+            "schedule": "",
+            "timeout": 15,
+            "enabled": true,
+            "logging": true,
+            "entrypoint": "src/main.js",
+            "commands": "npm install",
+            "ignore": [
+                "node_modules",
+                ".npm"
+            ],
+            "deploymentRetention": 0,
+            "path": "functions/reject-friend-request"
+        }
+    ],
+    "tablesDB": [
+        {
+            "$id": "6a33f1fa0031afe7debb",
+            "name": "status-database",
+            "enabled": true
+        }
+    ],
+    "tables": [
+        {
+            "$id": "profiles",
+            "$permissions": [
+                "create(\"users\")",
+                "read(\"users\")"
+            ],
+            "databaseId": "6a33f1fa0031afe7debb",
+            "name": "profiles",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "nickname",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 30,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "avatarURL",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "statusEmoji",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": "😀",
+                    "encrypt": false
+                },
+                {
+                    "key": "statusText",
+                    "type": "varchar",
+                    "required": false,
+                    "array": false,
+                    "size": 30,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "statusUpdatedAt",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "name",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 30,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "friendships",
+            "$permissions": [
+                "create(\"users\")",
+                "read(\"users\")"
+            ],
+            "databaseId": "6a33f1fa0031afe7debb",
+            "name": "friendships",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "requesterId",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "addresseeId",
+                    "type": "varchar",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "default": "pending",
+                    "format": "enum",
+                    "elements": [
+                        "pending",
+                        "accepted"
+                    ]
+                }
+            ],
+            "indexes": []
+        }
+    ]
+}
