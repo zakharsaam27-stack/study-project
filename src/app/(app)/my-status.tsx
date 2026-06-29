@@ -1,3 +1,5 @@
+// TO DO: CUSTOM STATUS, PLURAL ACCORDING TO GENDER
+
 import {useAuth} from "@/contexts/auth.context";
 import {database_id, profiles_table_id, tablesDB} from "@/lib/appwrite";
 import { useFocusEffect } from "expo-router";

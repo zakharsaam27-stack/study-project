@@ -32,19 +32,6 @@ export default function AddFriendScreen() {
     return null;
   }
 
-  const checkReqAlreadySent = async (
-    addresseeId: string
-  ) => {
-    const checkReq = await tablesDB.listRows({
-      databaseId: database_id,
-      tableId: friendship_table_id,
-      queries: [
-        Query.equal('requesterId', user.$id),
-        Query.equal('addresseeId', addresseeId)
-      ]
-    });
-  };
-
   const handleSendRequest = async (searchText: string) => {
     try {
       const searchResult = await tablesDB.listRows({
@@ -69,6 +56,7 @@ export default function AddFriendScreen() {
       
       if (checkReq.total > 0) {
         setError("Заявка уже отправлена")
+        setRequestSent(false)
         return
       }
 

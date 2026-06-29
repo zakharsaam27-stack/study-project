@@ -1,3 +1,7 @@
+// TO DO: DELETE FRIEND BY SWIPE, OPEN PROFILE, 
+// SEPARATE SCROLLVIEWS FOR SEARCHFRIENDS AND FRIENDSLIST, 
+// STACKING, SEARCH BY NAME, FIX GAP WHEN EMPTY SEARCHFRIENDS RESUlt
+
 import {useAuth} from "@/contexts/auth.context";
 import {
   database_id,
@@ -5,10 +9,18 @@ import {
   profiles_table_id,
   tablesDB,
 } from "@/lib/appwrite";
-import { useFocusEffect, useRouter } from "expo-router";
+import {useFocusEffect, useRouter} from "expo-router";
 import {useCallback, useEffect, useState} from "react";
-import {Button, Pressable, StyleSheet, Text, TextInput, View} from "react-native";
-import {ID, Models, Query} from "react-native-appwrite";
+import {
+  Button,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import {Models, Query} from "react-native-appwrite";
 import {SafeAreaView} from "react-native-safe-area-context";
 
 export default function FriendsScreen() {
@@ -17,17 +29,18 @@ export default function FriendsScreen() {
   const [friendsProfiles, setFriendsProfiles] = useState<Models.DefaultRow[]>(
     [],
   );
+  const [searchFriend, setSearchFriend] = useState("");
 
   const {user} = useAuth();
 
-  const router = useRouter()
+  const router = useRouter();
 
   useFocusEffect(
     useCallback(() => {
-      fetchRequests()
-      fetchFriendList()
-    }, [])
-  )
+      fetchRequests();
+      fetchFriendList();
+    }, []),
+  );
 
   useEffect(() => {
     if (friendList.length === 0) {
@@ -82,29 +95,68 @@ export default function FriendsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Друзья {friendList.length}</Text>
-        <Button title="+ Добавить" onPress={() => router.push('/(app)/friends/add-friend')}/>
+        <Button
+          title="+ Добавить"
+          onPress={() => router.push("/(app)/friends/add-friend")}
+        />
       </View>
-      <View style={styles.searchBar}>
-        <TextInput placeholder="Поиск" autoCapitalize="none"/>
-      </View>
-      <Pressable style={styles.requestsCard} onPress={() => router.push('/(app)/friends/requests')}>
-        <Text>Входящие заявки</Text>
-        <Text style={{color: '#999'}}>{requests.length} хотят дружить</Text>
-      </Pressable>
-      <Text style={styles.sectionLabel}>Все друзья</Text>
-      <View>
-        {friendsProfiles.map((friend) => (
-          <View key={friend.$id} style={styles.friendCard}>
-            <View style={styles.avatar} />
-            <View style={{flex: 1}}>
-              <Text>{friend.name as string}</Text>
-              <Text style={{color: '#999', fontSize: 13}}>@{friend.nickname as string}</Text>
-            </View>
-            <Text style={{fontSize: 13, color: '#666'}}>{friend.statusEmoji as string} {friend.statusText as string}</Text>
+      <ScrollView>
+        <View style={styles.searchBar}>
+          <TextInput
+            placeholder="Поиск по никнейму"
+            autoCapitalize="none"
+            onChangeText={setSearchFriend}
+          />
+        </View>
+
+        {searchFriend && (
+          <View style={styles.searchResult}>
+            {friendsProfiles
+              .filter((f) => f.nickname.startsWith(searchFriend))
+              .map((friend) => (
+                <View key={friend.$id} style={styles.friendCard}>
+                  <View style={styles.avatar} />
+                  <View style={{flex: 1}}>
+                    <Text>{friend.name as string}</Text>
+                    <Text style={{color: "#999", fontSize: 13}}>
+                      @{friend.nickname as string}
+                    </Text>
+                  </View>
+                  <Text style={{fontSize: 13, color: "#666"}}>
+                    {friend.statusEmoji as string} {friend.statusText as string}
+                  </Text>
+                </View>
+              ))}
           </View>
-        ))}
-        <Text style={styles.hint}>Смахни влево, чтобы удалить друга</Text>
-      </View>
+        )}
+
+        <Pressable
+          style={styles.requestsCard}
+          onPress={() => router.push("/(app)/friends/requests")}
+        >
+          <Text>Входящие заявки</Text>
+          <Text style={{color: "#999"}}>{requests.length}</Text>
+        </Pressable>
+        <Text style={styles.sectionLabel}>Все друзья</Text>
+        <View>
+          {friendsProfiles.map((friend) => (
+            <View style={styles.friendCard} key={friend.$id}>
+              <View style={styles.avatar} />
+              <View style={{flex: 1}}>
+                <Text>{friend.name as string}</Text>
+                <Text style={{color: "#999", fontSize: 13}}>
+                  @{friend.nickname as string}
+                </Text>
+              </View>
+              <Text style={{fontSize: 13, color: "#666"}}>
+                {friend.statusEmoji as string} {friend.statusText as string}
+              </Text>
+            </View>
+          ))}
+          <Text style={styles.hint}>Смахни влево, чтобы удалить друга</Text>
+          <Text style={styles.hint}>(Coming soon)</Text>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -172,4 +224,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   hint: {textAlign: "center", fontSize: 12, color: "#aaa", marginTop: 8},
-})
+  searchResult: {
+    marginTop: 14,
+  },
+});
