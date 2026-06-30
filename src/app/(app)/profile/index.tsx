@@ -81,7 +81,7 @@ export default function ProfileScreen() {
       </View>
 
       <Pressable style={styles.editButton}>
-        <Ionicons name="pencil-outline" size={18} color="#fff" />
+        <Ionicons name="create-outline" size={18} color="#fff" />
         <Text style={styles.editButtonText}>Редактировать профиль</Text>
       </Pressable>
 
@@ -108,20 +108,20 @@ export default function ProfileScreen() {
               styles.settingsRow,
               index === settingsRows.length - 1 && styles.lastRow,
             ]}>
-            <Ionicons name={row.icon} size={20} color="#888" />
+            <Ionicons name={row.icon} size={20} color="#5F5E5A" />
             <Text style={styles.settingsLabel}>{row.label}</Text>
             <View style={styles.settingsRight}>
               {"value" in row && (
                 <Text style={styles.settingsValue}>{row.value}</Text>
               )}
-              <Ionicons name="chevron-forward" size={16} color="#ccc" />
+              <Ionicons name="chevron-forward" size={16} color="#C2BFB3" />
             </View>
           </View>
         ))}
       </View>
 
       <Pressable style={styles.logoutButton} onPress={logOut}>
-        <Ionicons name="exit-outline" size={18} color="#D85A30" />
+        <Ionicons name="exit-outline" size={18} color="#C0392B" />
         <Text style={styles.logoutText}>Выйти из аккаунта</Text>
       </Pressable>
     </SafeAreaView>
@@ -131,21 +131,22 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f2f2f2",
+    backgroundColor: "#F1EFE8",
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 4,
-    paddingBottom: 8,
+    paddingBottom: 6,
   },
   headerTitle: {
-    fontSize: 30,
+    fontSize: 22,
     fontWeight: "700",
-    color: "#111",
+    letterSpacing: -0.4,
+    color: "#2C2C2A",
   },
   profileSection: {
     alignItems: "center",
-    paddingVertical: 20,
+    paddingVertical: 18,
     gap: 4,
   },
   avatarWrapper: {
@@ -153,51 +154,51 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   avatar: {
-    width: 88,
-    height: 88,
+    width: 90,
+    height: 90,
     borderRadius: 999,
-    backgroundColor: "#d8d8d8",
+    backgroundColor: "#FAECE7",
     alignItems: "center",
     justifyContent: "center",
   },
   avatarInitials: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#555",
+    fontSize: 30,
+    fontWeight: "600",
+    color: "#712B13",
   },
   statusDot: {
     position: "absolute",
-    bottom: 4,
-    right: 4,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: "#3cb371",
-    borderWidth: 2,
-    borderColor: "#f2f2f2",
+    bottom: 3,
+    right: 3,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#1D9E75",
+    borderWidth: 3,
+    borderColor: "#F1EFE8",
   },
   name: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#111",
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#2C2C2A",
   },
   nickname: {
-    fontSize: 15,
-    color: "#888",
+    fontSize: 14,
+    color: "#888780",
   },
   editButton: {
     marginHorizontal: 16,
     marginBottom: 12,
-    backgroundColor: "#333",
-    borderRadius: 16,
-    paddingVertical: 16,
+    backgroundColor: "#D85A30",
+    borderRadius: 10,
+    height: 50,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
   },
   editButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
     color: "#fff",
   },
@@ -206,8 +207,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#e8e8e8",
-    borderRadius: 16,
+    borderColor: "#D3D1C7",
+    borderRadius: 14,
     padding: 14,
   },
   statusFriendRow: {
@@ -221,10 +222,10 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   emojiBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: "#efefef",
+    width: 42,
+    height: 42,
+    borderRadius: 999,
+    backgroundColor: "#E1F5EE",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -233,27 +234,27 @@ const styles = StyleSheet.create({
   },
   statusLabel: {
     fontSize: 11,
-    fontWeight: "600",
-    color: "#aaa",
+    fontWeight: "500",
+    color: "#888780",
     letterSpacing: 1,
     marginBottom: 2,
   },
   statusText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "500",
-    color: "#111",
+    color: "#2C2C2A",
   },
   friendCountText: {
-    fontSize: 15,
-    color: "#888",
+    fontSize: 13,
+    color: "#888780",
   },
   settingsRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 13,
+    paddingVertical: 14,
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#f2f2f2",
+    borderBottomColor: "#ECEAE1",
   },
   lastRow: {
     borderBottomWidth: 0,
@@ -261,7 +262,7 @@ const styles = StyleSheet.create({
   settingsLabel: {
     flex: 1,
     fontSize: 15,
-    color: "#111",
+    color: "#2C2C2A",
   },
   settingsRight: {
     flexDirection: "row",
@@ -269,25 +270,25 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   settingsValue: {
-    fontSize: 14,
-    color: "#aaa",
+    fontSize: 13,
+    color: "#888780",
   },
   logoutButton: {
     marginHorizontal: 16,
-    marginTop: 8,
+    marginTop: 14,
     backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#e8e8e8",
-    borderRadius: 16,
-    paddingVertical: 16,
+    borderColor: "#EBC4C0",
+    borderRadius: 10,
+    height: 50,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
   },
   logoutText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
-    color: "#444",
+    color: "#C0392B",
   },
 });

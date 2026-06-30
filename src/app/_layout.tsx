@@ -1,5 +1,5 @@
 import {AuthProvider, useAuth} from "@/contexts/auth.context";
-import {DarkTheme, DefaultTheme, Stack, ThemeProvider} from "expo-router";
+import {Stack} from "expo-router";
 import {useColorScheme} from "react-native";
 
 export default function RootLayout() {
@@ -19,7 +19,6 @@ function RootNavigator() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Protected guard={!user}>
           <Stack.Screen name="(auth)" options={{headerShown: false}} />
@@ -28,6 +27,5 @@ function RootNavigator() {
           <Stack.Screen name="(app)" options={{headerShown: false}} />
         </Stack.Protected>
       </Stack>
-    </ThemeProvider>
   );
 }

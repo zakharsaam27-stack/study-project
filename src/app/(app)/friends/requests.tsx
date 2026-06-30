@@ -8,10 +8,11 @@ import {
   reject_friend_function_id,
   tablesDB,
 } from "@/lib/appwrite";
-import {useFocusEffect} from "expo-router";
-import {useCallback, useEffect, useState} from "react";
+import {Ionicons} from "@expo/vector-icons";
+import {useFocusEffect, useRouter} from "expo-router";
+import {useCallback, useState} from "react";
 import {Pressable, StyleSheet, Text, View} from "react-native";
-import {ID, Models, Query} from "react-native-appwrite";
+import {Models, Query} from "react-native-appwrite";
 import {SafeAreaView} from "react-native-safe-area-context";
 
 export default function RequestsScreen() {
@@ -19,7 +20,9 @@ export default function RequestsScreen() {
   const [requestersProfiles, setRequestersProfiles] = useState<
     Models.DefaultRow[]
   >([]);
+  const [error, setError] = useState('')
   const {user} = useAuth();
+  const router = useRouter();
 
   useFocusEffect(
     useCallback(() => {
@@ -27,17 +30,7 @@ export default function RequestsScreen() {
     }, []),
   );
 
-  useEffect(() => {
-    if (requests.length === 0) {
-      return;
-    } else {
-      fetchRequestersProfiles();
-    }
-  }, [requests]);
-
-  if (!user) {
-    return null;
-  }
+  if (!user) return null
 
   const fetchRequests = async () => {
     const fetchRequestsResult = await tablesDB.listRows({
@@ -49,6 +42,8 @@ export default function RequestsScreen() {
       ],
     });
     setRequests(fetchRequestsResult.rows);
+
+    await fetchRequestersProfiles(fetchRequestsResult.rows)
   };
 
   const handleAcceptRequest = async (
@@ -57,12 +52,15 @@ export default function RequestsScreen() {
     addresseeId: string,
   ) => {
     
+    const removedRequest = requests.find((r) => r.$id === rowId)
+    setRequests((prev) => prev.filter((r) => r.$id !== rowId));
+    
     const checkAcc = await tablesDB.listRows({
         databaseId: database_id,
         tableId: friendship_table_id,
         queries: [
-          Query.equal('requesterId', addresseeId),
-          Query.equal('addresseeId', user.$id),
+          Query.equal('requesterId', user.$id),
+          Query.equal('addresseeId', requesterId),
           Query.equal('status', 'accepted')
         ]
       });
@@ -72,27 +70,40 @@ export default function RequestsScreen() {
       }
 
     
+    try {
     await functions.createExecution(
       accept_friend_function_id,
       JSON.stringify({rowId, requesterId, addresseeId}),
-    );
-    setRequests((prev) => prev.filter((r) => r.$id !== rowId));
+    )} catch (err) {
+      if (removedRequest) {
+        setRequests((prev) => [...prev, removedRequest])
+      }
+      setError('Что то пошло не так')
+    }
   };
 
   const handleRejectRequest = async (rowId: string) => {
-    functions.createExecution(
-      reject_friend_function_id, JSON.stringify({rowId})
-    )
+    const removedRequest = requests.find((r) => r.$id === rowId)
     setRequests((prev) => prev.filter((r) => r.$id !== rowId));
+    try {
+    await functions.createExecution(
+      reject_friend_function_id, JSON.stringify({rowId})
+    )} catch (err) {
+      if (removedRequest) {
+        setRequests((prev) => [...prev, removedRequest])
+      }
+      setError('Что то пошло не так')
+    }
+
   };
 
-  const fetchRequestersProfiles = async () => {
+  const fetchRequestersProfiles = async (rows: Models.DefaultRow[]) => {
     const profiles = await Promise.all(
-      requests.map((request) =>
+      rows.map((row) =>
         tablesDB.getRow({
           databaseId: database_id,
           tableId: profiles_table_id,
-          rowId: request.requesterId,
+          rowId: row.requesterId,
         }),
       ),
     );
@@ -102,9 +113,29 @@ export default function RequestsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Входящие заявки {requests.length}</Text>
+        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={26} color="#2C2C2A" />
+        </Pressable>
+        <Text style={styles.title}>
+          Входящие заявки <Text style={styles.titleCount}>{requests.length}</Text>
+        </Text>
       </View>
-      <View>
+      {requests.length === 0 ? (
+        <View style={styles.emptyState}>
+          <View style={styles.emptyIcon}>
+            <Ionicons name="chatbubble-outline" size={48} color="#B0AEA3" />
+          </View>
+          <Text style={styles.emptyTitle}>Нет входящих заявок</Text>
+          <Text style={styles.emptySubtitle}>
+            Заявки в друзья будут появляться здесь. Поделись ссылкой, чтобы тебя нашли.
+          </Text>
+          <Pressable style={styles.shareButton}>
+            <Ionicons name="share-social-outline" size={17} color="#2C2C2A" />
+            <Text style={styles.shareButtonText}>Поделиться ссылкой</Text>
+          </Pressable>
+        </View>
+      ) : (
+      <View style={styles.list}>
         {requests.map((request) => {
           const profile = requestersProfiles.find(
             (p) => p.$id === request.requesterId,
@@ -144,6 +175,7 @@ export default function RequestsScreen() {
                     )
                   }
                 >
+                  <Ionicons name="checkmark" size={16} color="#fff" />
                   <Text style={styles.acceptBtnText}>Принять</Text>
                 </Pressable>
                 <Pressable
@@ -160,54 +192,110 @@ export default function RequestsScreen() {
           );
         })}
       </View>
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: "#f5f5f5"},
-  header: {paddingHorizontal: 16, paddingVertical: 12},
-  title: {fontSize: 22, fontWeight: "700"},
+  container: {flex: 1, backgroundColor: "#F1EFE8"},
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  backBtn: {padding: 2},
+  title: {fontSize: 22, fontWeight: "600", letterSpacing: -0.3, color: "#2C2C2A"},
+  titleCount: {color: "#888780", fontWeight: "600"},
+  list: {paddingHorizontal: 16, marginTop: 10, gap: 14},
   card: {
-    marginHorizontal: 16,
-    marginBottom: 8,
     backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 12,
-    padding: 12,
+    borderColor: "#D3D1C7",
+    borderRadius: 16,
+    padding: 16,
     flexDirection: "column",
-    gap: 10,
+    gap: 14,
   },
   cardTop: {flexDirection: "row", alignItems: "center", gap: 12},
   avatar: {
-    width: 46,
-    height: 46,
+    width: 48,
+    height: 48,
     borderRadius: 999,
-    backgroundColor: "#333",
+    backgroundColor: "#FAECE7",
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarText: {color: "#fff", fontWeight: "700", fontSize: 15},
-  info: {flex: 1},
-  name: {fontSize: 15, fontWeight: "600"},
-  nickname: {fontSize: 13, color: "#999"},
-  actions: {flexDirection: "row", gap: 8},
+  avatarText: {color: "#712B13", fontWeight: "600", fontSize: 16},
+  info: {flex: 1, gap: 2},
+  name: {fontSize: 16, fontWeight: "500", color: "#2C2C2A"},
+  nickname: {fontSize: 13, color: "#888780"},
+  actions: {flexDirection: "row", gap: 10},
   acceptBtn: {
     flex: 1,
-    backgroundColor: "#333",
+    flexDirection: "row",
+    backgroundColor: "#D85A30",
     borderRadius: 10,
-    paddingVertical: 10,
+    height: 44,
     alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
   },
   acceptBtnText: {color: "#fff", fontWeight: "600", fontSize: 14},
   rejectBtn: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#D3D1C7",
+    backgroundColor: "#fff",
     borderRadius: 10,
-    paddingVertical: 10,
+    height: 44,
     alignItems: "center",
+    justifyContent: "center",
   },
-  rejectBtnText: {color: "#333", fontWeight: "600", fontSize: 14},
+  rejectBtnText: {color: "#5F5E5A", fontWeight: "600", fontSize: 14},
+  emptyState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  emptyIcon: {
+    width: 108,
+    height: 108,
+    borderRadius: 999,
+    backgroundColor: "#E9E6DC",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 22,
+  },
+  emptyTitle: {
+    fontSize: 19,
+    fontWeight: "600",
+    letterSpacing: -0.2,
+    color: "#2C2C2A",
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: "#888780",
+    textAlign: "center",
+    maxWidth: 250,
+    marginTop: 8,
+  },
+  shareButton: {
+    marginTop: 22,
+    height: 46,
+    paddingHorizontal: 22,
+    borderRadius: 10,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#D3D1C7",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  shareButtonText: {fontSize: 14, fontWeight: "600", color: "#2C2C2A"},
 });

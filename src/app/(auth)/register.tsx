@@ -64,7 +64,7 @@ export default function RegisterScreen() {
               <Text style={styles.label}>ИМЯ</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Захар А."
+                placeholder="Name"
                 placeholderTextColor="#B8B6AF"
                 value={name}
                 onChangeText={setName}
@@ -77,7 +77,7 @@ export default function RegisterScreen() {
                 <Text style={styles.atSign}>@</Text>
                 <TextInput
                   style={styles.nicknameInput}
-                  placeholder="zakhar_dev"
+                  placeholder="nickname"
                   placeholderTextColor="#B8B6AF"
                   value={nickname}
                   onChangeText={setNickname}
@@ -104,7 +104,7 @@ export default function RegisterScreen() {
               <View style={styles.passwordWrapper}>
                 <TextInput
                   style={styles.passwordInput}
-                  placeholder="••••••••"
+                  placeholder="password"
                   placeholderTextColor="#B8B6AF"
                   value={password}
                   onChangeText={setPassword}

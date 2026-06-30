@@ -9,10 +9,10 @@ import {
   profiles_table_id,
   tablesDB,
 } from "@/lib/appwrite";
+import {Ionicons} from "@expo/vector-icons";
 import {useFocusEffect, useRouter} from "expo-router";
 import {useCallback, useEffect, useState} from "react";
 import {
-  Button,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -95,15 +95,32 @@ export default function FriendsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Друзья {friendList.length}</Text>
-        <Button
-          title="+ Добавить"
+        <Pressable
+          style={styles.addButton}
           onPress={() => router.push("/(app)/friends/add-friend")}
-        />
+        >
+          <Ionicons name="add" size={16} color="#fff" />
+          <Text style={styles.addButtonText}>Добавить</Text>
+        </Pressable>
       </View>
+      {friendsProfiles.length === 0 ? (
+        <View style={styles.emptyState}>
+          <View style={styles.emptyIcon}>
+            <Ionicons name="person-add-outline" size={50} color="#B0AEA3" />
+          </View>
+          <Text style={styles.emptyTitle}>У тебя пока нет друзей</Text>
+          <Text style={styles.emptySubtitle}>
+            Добавь друзей по нику или поделись своей ссылкой.
+          </Text>
+        </View>
+      ) : (
       <ScrollView>
         <View style={styles.searchBar}>
+          <Ionicons name="search" size={18} color="#888780" />
           <TextInput
+            style={styles.searchInput}
             placeholder="Поиск по никнейму"
+            placeholderTextColor="#888780"
             autoCapitalize="none"
             onChangeText={setSearchFriend}
           />
@@ -115,16 +132,27 @@ export default function FriendsScreen() {
               .filter((f) => f.nickname.startsWith(searchFriend))
               .map((friend) => (
                 <View key={friend.$id} style={styles.friendCard}>
-                  <View style={styles.avatar} />
-                  <View style={{flex: 1}}>
-                    <Text>{friend.name as string}</Text>
-                    <Text style={{color: "#999", fontSize: 13}}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarInitials}>
+                      {(friend.name as string)
+                        .split(" ")
+                        .map((w) => w[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)}
+                    </Text>
+                  </View>
+                  <View style={styles.friendInfo}>
+                    <Text style={styles.friendName}>{friend.name as string}</Text>
+                    <Text style={styles.friendNickname}>
                       @{friend.nickname as string}
                     </Text>
                   </View>
-                  <Text style={{fontSize: 13, color: "#666"}}>
-                    {friend.statusEmoji as string} {friend.statusText as string}
-                  </Text>
+                  <View style={styles.statusPill}>
+                    <Text style={styles.statusText}>
+                      {friend.statusEmoji as string} {friend.statusText as string}
+                    </Text>
+                  </View>
                 </View>
               ))}
           </View>
@@ -134,97 +162,210 @@ export default function FriendsScreen() {
           style={styles.requestsCard}
           onPress={() => router.push("/(app)/friends/requests")}
         >
-          <Text>Входящие заявки</Text>
-          <Text style={{color: "#999"}}>{requests.length}</Text>
+          <View style={styles.requestsIcon}>
+            <Ionicons name="person-add" size={18} color="#fff" />
+          </View>
+          <View style={styles.friendInfo}>
+            <Text style={styles.requestsTitle}>Входящие заявки</Text>
+            <Text style={styles.requestsSubtitle}>{requests.length} человек хотят дружить</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#D85A30" />
         </Pressable>
         <Text style={styles.sectionLabel}>Все друзья</Text>
         <View>
           {friendsProfiles.map((friend) => (
             <View style={styles.friendCard} key={friend.$id}>
-              <View style={styles.avatar} />
-              <View style={{flex: 1}}>
-                <Text>{friend.name as string}</Text>
-                <Text style={{color: "#999", fontSize: 13}}>
+              <View style={styles.avatarWrapper}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarInitials}>
+                    {(friend.name as string)
+                      .split(" ")
+                      .map((w) => w[0])
+                      .join("")
+                      .toUpperCase()
+                      .slice(0, 2)}
+                  </Text>
+                </View>
+                <View style={styles.avatarDot} />
+              </View>
+              <View style={styles.friendInfo}>
+                <Text style={styles.friendName}>{friend.name as string}</Text>
+                <Text style={styles.friendNickname}>
                   @{friend.nickname as string}
                 </Text>
               </View>
-              <Text style={{fontSize: 13, color: "#666"}}>
-                {friend.statusEmoji as string} {friend.statusText as string}
-              </Text>
+              <View style={styles.statusPill}>
+                <Text style={styles.statusText}>
+                  {friend.statusEmoji as string} {friend.statusText as string}
+                </Text>
+              </View>
             </View>
           ))}
           <Text style={styles.hint}>Смахни влево, чтобы удалить друга</Text>
           <Text style={styles.hint}>(Coming soon)</Text>
         </View>
       </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: "#f5f5f5"},
+  container: {flex: 1, backgroundColor: "#F1EFE8"},
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
-  title: {fontSize: 22, fontWeight: "700"},
+  title: {fontSize: 22, fontWeight: "700", letterSpacing: -0.4, color: "#2C2C2A"},
+  addButton: {
+    height: 34,
+    paddingHorizontal: 13,
+    borderRadius: 8,
+    backgroundColor: "#D85A30",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  addButtonText: {color: "#fff", fontSize: 14, fontWeight: "600"},
   searchBar: {
-    marginHorizontal: 16,
+    marginHorizontal: 18,
     height: 44,
-    backgroundColor: "#fff",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#D3D1C7",
     borderRadius: 10,
-    paddingHorizontal: 12,
-    justifyContent: "center",
+    paddingHorizontal: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: "#2C2C2A",
   },
   requestsCard: {
-    marginHorizontal: 16,
+    marginHorizontal: 18,
     marginTop: 10,
-    backgroundColor: "#fff",
+    backgroundColor: "#FAECE7",
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 12,
-    padding: 14,
+    borderColor: "#EFC8B6",
+    borderRadius: 14,
+    padding: 13,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
+  requestsIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    backgroundColor: "#D85A30",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  requestsTitle: {fontSize: 15, fontWeight: "600", color: "#712B13"},
+  requestsSubtitle: {fontSize: 13, color: "#9a5d40", marginTop: 2},
   sectionLabel: {
-    marginHorizontal: 16,
+    marginHorizontal: 18,
     marginTop: 14,
     marginBottom: 8,
     fontSize: 11,
-    fontWeight: "600",
+    fontWeight: "500",
     letterSpacing: 1,
     textTransform: "uppercase",
-    color: "#999",
+    color: "#888780",
   },
   friendCard: {
-    marginHorizontal: 16,
+    marginHorizontal: 18,
     marginBottom: 8,
-    backgroundColor: "#fff",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 12,
-    padding: 12,
+    borderColor: "#D3D1C7",
+    borderRadius: 14,
+    padding: 11,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+  },
+  avatarWrapper: {
+    position: "relative",
+    width: 42,
+    height: 42,
   },
   avatar: {
     width: 42,
     height: 42,
     borderRadius: 999,
-    backgroundColor: "#e8e8e8",
+    backgroundColor: "#FAECE7",
     alignItems: "center",
     justifyContent: "center",
   },
-  hint: {textAlign: "center", fontSize: 12, color: "#aaa", marginTop: 8},
+  avatarInitials: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#712B13",
+  },
+  avatarDot: {
+    position: "absolute",
+    right: -1,
+    bottom: -1,
+    width: 12,
+    height: 12,
+    borderRadius: 999,
+    backgroundColor: "#1D9E75",
+    borderWidth: 2.5,
+    borderColor: "#FFFFFF",
+  },
+  friendInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  friendName: {fontSize: 15, fontWeight: "500", color: "#2C2C2A"},
+  friendNickname: {fontSize: 13, color: "#888780"},
+  statusPill: {
+    backgroundColor: "#E1F5EE",
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+  },
+  statusText: {fontSize: 12, fontWeight: "500", color: "#085041"},
+  hint: {textAlign: "center", fontSize: 12, color: "#a8a79f", marginTop: 8},
   searchResult: {
     marginTop: 14,
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 40,
+  },
+  emptyIcon: {
+    width: 108,
+    height: 108,
+    borderRadius: 999,
+    backgroundColor: "#E9E6DC",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 22,
+  },
+  emptyTitle: {
+    fontSize: 19,
+    fontWeight: "600",
+    letterSpacing: -0.2,
+    color: "#2C2C2A",
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: "#888780",
+    textAlign: "center",
+    maxWidth: 250,
+    marginTop: 8,
   },
 });

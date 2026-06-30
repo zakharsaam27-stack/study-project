@@ -69,7 +69,7 @@ export default function LoginScreen() {
               <View style={styles.passwordWrapper}>
                 <TextInput
                   style={styles.passwordInput}
-                  placeholder="••••••••"
+                  placeholder="password"
                   placeholderTextColor="#B8B6AF"
                   value={password}
                   onChangeText={setPassword}

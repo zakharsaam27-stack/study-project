@@ -121,24 +121,32 @@ export default function MyStatusScreen() {
         <Text style={styles.title}>Мой статус</Text>
       </View>
       <View style={styles.currentStatusBox}>
-        <Text style={styles.currentStatusLabel}>Текущий статус</Text>
-        <Text style={styles.currentStatusEmoji}>{statusEmoji}</Text>
-        <Text style={styles.currentStatusText}>{statusText}</Text>
-        <Text style={styles.currentStatusUpdatedAt}>{formatRelativeTime()}</Text>
+        <View style={styles.currentStatusIcon}>
+          <Text style={styles.currentStatusEmoji}>{statusEmoji}</Text>
+        </View>
+        <View style={styles.currentStatusInfo}>
+          <Text style={styles.currentStatusLabel}>Текущий статус</Text>
+          <Text style={styles.currentStatusText}>{statusText}</Text>
+          <Text style={styles.currentStatusUpdatedAt}>{formatRelativeTime()}</Text>
+        </View>
       </View>
+      <Text style={styles.sectionLabel}>Быстрый выбор</Text>
       <View style={styles.presetsGrid}>
-        {presets.map((preset) => (
-          <Pressable
-            key={preset.statusText}
-            style={styles.tile}
-            onPress={() =>
-              handleChangeStatus(preset.statusEmoji, preset.statusText)
-            }
-          >
-            <Text style={styles.emoji}>{preset.statusEmoji}</Text>
-            <Text style={styles.label}>{preset.statusText}</Text>
-          </Pressable>
-        ))}
+        {presets.map((preset) => {
+          const isSelected = preset.statusEmoji === statusEmoji && preset.statusText === statusText;
+          return (
+            <Pressable
+              key={preset.statusText}
+              style={[styles.tile, isSelected && styles.tileSelected]}
+              onPress={() =>
+                handleChangeStatus(preset.statusEmoji, preset.statusText)
+              }
+            >
+              <Text style={styles.emoji}>{preset.statusEmoji}</Text>
+              <Text style={styles.label}>{preset.statusText}</Text>
+            </Pressable>
+          );
+        })}
       </View>
     </SafeAreaView>
   );
@@ -147,56 +155,95 @@ export default function MyStatusScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#F1EFE8",
     padding: 20,
   },
   title: {
     fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 16,
+    fontWeight: "700",
+    letterSpacing: -0.4,
+    color: "#2C2C2A",
+    marginBottom: 18,
   },
   currentStatusBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#D3D1C7",
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 20,
+    marginBottom: 18,
+  },
+  currentStatusIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 999,
+    backgroundColor: "#E1F5EE",
     alignItems: "center",
+    justifyContent: "center",
+  },
+  currentStatusInfo: {
+    flex: 1,
+    gap: 3,
   },
   currentStatusLabel: {
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: "500",
+    letterSpacing: 1,
+    textTransform: "uppercase",
     color: "#888780",
-    marginBottom: 6,
   },
   currentStatusEmoji: {
-    fontSize: 32,
+    fontSize: 30,
   },
   currentStatusText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "600",
+    color: "#2C2C2A",
+  },
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: "500",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    color: "#888780",
+    marginBottom: 12,
   },
   presetsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: 12,
   },
   tile: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: "#D3D1C7",
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    padding: 15,
+    gap: 9,
     width: "47%",
   },
+  tileSelected: {
+    borderWidth: 2,
+    borderColor: "#D85A30",
+    shadowColor: "#D85A30",
+    shadowOffset: {width: 0, height: 0},
+    shadowOpacity: 1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
   emoji: {
-    fontSize: 28,
-    marginBottom: 4,
+    fontSize: 25,
   },
   label: {
     fontSize: 15,
+    fontWeight: "500",
+    color: "#2C2C2A",
   },
   currentStatusUpdatedAt: {
     fontSize: 12,
     color: "#888780",
-    marginTop: 6,
   },
 });

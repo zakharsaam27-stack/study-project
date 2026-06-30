@@ -94,8 +94,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#1D9E75",
     borderWidth: 4,
     borderColor: "#D85A30",
-    right: 14,
-    bottom: 14,
+    right: 22,
+    bottom: 22,
   },
   titleGroup: {
     alignItems: "center",
