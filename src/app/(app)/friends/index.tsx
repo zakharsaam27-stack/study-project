@@ -1,16 +1,17 @@
-// TO DO: DELETE FRIEND BY SWIPE, OPEN PROFILE, 
-// SEPARATE SCROLLVIEWS FOR SEARCHFRIENDS AND FRIENDSLIST, 
+// TO DO: DELETE FRIEND BY SWIPE, OPEN PROFILE,
+// SEPARATE SCROLLVIEWS FOR SEARCHFRIENDS AND FRIENDSLIST,
 // STACKING, SEARCH BY NAME, FIX GAP WHEN EMPTY SEARCHFRIENDS RESUlt
 
 import {useAuth} from "@/contexts/auth.context";
 import {
+  client,
   database_id,
   friendship_table_id,
   profiles_table_id,
   tablesDB,
 } from "@/lib/appwrite";
 import {Ionicons} from "@expo/vector-icons";
-import {useFocusEffect, useRouter} from "expo-router";
+import {useFocusEffect, useRouter, useSegments} from "expo-router";
 import {useCallback, useEffect, useState} from "react";
 import {
   Pressable,
@@ -35,20 +36,29 @@ export default function FriendsScreen() {
 
   const router = useRouter();
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchRequests();
-      fetchFriendList();
-    }, []),
-  );
-
   useEffect(() => {
-    if (friendList.length === 0) {
-      return;
-    } else {
-      fetchFriendsProfiles();
+    fetchFriendList();
+    fetchRequests();
+    fetchFriendsProfiles();
+
+    const unsubscribeFriends = client.subscribe(
+      `databases.${database_id}.tables.${friendship_table_id}.rows`,
+      () => {
+        fetchFriendList();
+        fetchRequests();
+      },
+    );
+    const unsubscribeProfiles = client.subscribe(
+      `databases.${database_id}.tables.${profiles_table_id}.rows`,
+      () => {
+        fetchFriendsProfiles()
+      },
+    );
+    return () => {
+      unsubscribeFriends()
+      unsubscribeProfiles()
     }
-  }, [friendList]);
+  }, []);
 
   if (!user) {
     return null;
@@ -114,24 +124,73 @@ export default function FriendsScreen() {
           </Text>
         </View>
       ) : (
-      <ScrollView>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={18} color="#888780" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Поиск по никнейму"
-            placeholderTextColor="#888780"
-            autoCapitalize="none"
-            onChangeText={setSearchFriend}
-          />
-        </View>
+        <ScrollView>
+          <View style={styles.searchBar}>
+            <Ionicons name="search" size={18} color="#888780" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Поиск по никнейму"
+              placeholderTextColor="#888780"
+              autoCapitalize="none"
+              onChangeText={setSearchFriend}
+            />
+          </View>
 
-        {searchFriend && (
-          <View style={styles.searchResult}>
-            {friendsProfiles
-              .filter((f) => f.nickname.startsWith(searchFriend))
-              .map((friend) => (
-                <View key={friend.$id} style={styles.friendCard}>
+          {searchFriend && (
+            <View style={styles.searchResult}>
+              {friendsProfiles
+                .filter((f) => f.nickname.startsWith(searchFriend))
+                .map((friend) => (
+                  <View key={friend.$id} style={styles.friendCard}>
+                    <View style={styles.avatar}>
+                      <Text style={styles.avatarInitials}>
+                        {(friend.name as string)
+                          .split(" ")
+                          .map((w) => w[0])
+                          .join("")
+                          .toUpperCase()
+                          .slice(0, 2)}
+                      </Text>
+                    </View>
+                    <View style={styles.friendInfo}>
+                      <Text style={styles.friendName}>
+                        {friend.name as string}
+                      </Text>
+                      <Text style={styles.friendNickname}>
+                        @{friend.nickname as string}
+                      </Text>
+                    </View>
+                    <View style={styles.statusPill}>
+                      <Text style={styles.statusText}>
+                        {friend.statusEmoji as string}{" "}
+                        {friend.statusText as string}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+            </View>
+          )}
+
+          <Pressable
+            style={styles.requestsCard}
+            onPress={() => router.push("/(app)/friends/requests")}
+          >
+            <View style={styles.requestsIcon}>
+              <Ionicons name="person-add" size={18} color="#fff" />
+            </View>
+            <View style={styles.friendInfo}>
+              <Text style={styles.requestsTitle}>Входящие заявки</Text>
+              <Text style={styles.requestsSubtitle}>
+                {requests.length} человек хотят дружить
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#D85A30" />
+          </Pressable>
+          <Text style={styles.sectionLabel}>Все друзья</Text>
+          <View>
+            {friendsProfiles.map((friend) => (
+              <View style={styles.friendCard} key={friend.$id}>
+                <View style={styles.avatarWrapper}>
                   <View style={styles.avatar}>
                     <Text style={styles.avatarInitials}>
                       {(friend.name as string)
@@ -142,69 +201,25 @@ export default function FriendsScreen() {
                         .slice(0, 2)}
                     </Text>
                   </View>
-                  <View style={styles.friendInfo}>
-                    <Text style={styles.friendName}>{friend.name as string}</Text>
-                    <Text style={styles.friendNickname}>
-                      @{friend.nickname as string}
-                    </Text>
-                  </View>
-                  <View style={styles.statusPill}>
-                    <Text style={styles.statusText}>
-                      {friend.statusEmoji as string} {friend.statusText as string}
-                    </Text>
-                  </View>
+                  <View style={styles.avatarDot} />
                 </View>
-              ))}
-          </View>
-        )}
-
-        <Pressable
-          style={styles.requestsCard}
-          onPress={() => router.push("/(app)/friends/requests")}
-        >
-          <View style={styles.requestsIcon}>
-            <Ionicons name="person-add" size={18} color="#fff" />
-          </View>
-          <View style={styles.friendInfo}>
-            <Text style={styles.requestsTitle}>Входящие заявки</Text>
-            <Text style={styles.requestsSubtitle}>{requests.length} человек хотят дружить</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#D85A30" />
-        </Pressable>
-        <Text style={styles.sectionLabel}>Все друзья</Text>
-        <View>
-          {friendsProfiles.map((friend) => (
-            <View style={styles.friendCard} key={friend.$id}>
-              <View style={styles.avatarWrapper}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarInitials}>
-                    {(friend.name as string)
-                      .split(" ")
-                      .map((w) => w[0])
-                      .join("")
-                      .toUpperCase()
-                      .slice(0, 2)}
+                <View style={styles.friendInfo}>
+                  <Text style={styles.friendName}>{friend.name as string}</Text>
+                  <Text style={styles.friendNickname}>
+                    @{friend.nickname as string}
                   </Text>
                 </View>
-                <View style={styles.avatarDot} />
+                <View style={styles.statusPill}>
+                  <Text style={styles.statusText}>
+                    {friend.statusEmoji as string} {friend.statusText as string}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.friendInfo}>
-                <Text style={styles.friendName}>{friend.name as string}</Text>
-                <Text style={styles.friendNickname}>
-                  @{friend.nickname as string}
-                </Text>
-              </View>
-              <View style={styles.statusPill}>
-                <Text style={styles.statusText}>
-                  {friend.statusEmoji as string} {friend.statusText as string}
-                </Text>
-              </View>
-            </View>
-          ))}
-          <Text style={styles.hint}>Смахни влево, чтобы удалить друга</Text>
-          <Text style={styles.hint}>(Coming soon)</Text>
-        </View>
-      </ScrollView>
+            ))}
+            <Text style={styles.hint}>Смахни влево, чтобы удалить друга</Text>
+            <Text style={styles.hint}>(Coming soon)</Text>
+          </View>
+        </ScrollView>
       )}
     </SafeAreaView>
   );
@@ -220,7 +235,12 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 12,
   },
-  title: {fontSize: 22, fontWeight: "700", letterSpacing: -0.4, color: "#2C2C2A"},
+  title: {
+    fontSize: 22,
+    fontWeight: "700",
+    letterSpacing: -0.4,
+    color: "#2C2C2A",
+  },
   addButton: {
     height: 34,
     paddingHorizontal: 13,

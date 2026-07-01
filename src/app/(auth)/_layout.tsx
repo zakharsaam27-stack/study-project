@@ -1,5 +1,10 @@
-import { Stack } from "expo-router";
+import {RegProvider} from "@/contexts/reg.context";
+import {Stack} from "expo-router";
 
 export default function AuthLayout() {
-    return <Stack screenOptions={{headerShown: false}}/>
+  return (
+    <RegProvider>
+      <Stack screenOptions={{headerShown: false}} />
+    </RegProvider>
+  );
 }

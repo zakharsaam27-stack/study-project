@@ -228,11 +228,6 @@ const styles = StyleSheet.create({
   tileSelected: {
     borderWidth: 2,
     borderColor: "#D85A30",
-    shadowColor: "#D85A30",
-    shadowOffset: {width: 0, height: 0},
-    shadowOpacity: 1,
-    shadowRadius: 3,
-    elevation: 2,
   },
   emoji: {
     fontSize: 25,

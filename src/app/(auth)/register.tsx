@@ -1,10 +1,9 @@
-// TO DO: SEE PASSWORD, FORGOT PASSWORD(?),
-// APPROPRIATE NAME AND NICKNAME PICKING
+// TO DO: FORGOT PASSWORD(?),
 
-import {useAuth} from "@/contexts/auth.context";
+import { useReg } from "@/contexts/reg.context";
 import {Ionicons} from "@expo/vector-icons";
-import {useRouter} from "expo-router";
-import {useState} from "react";
+import {useFocusEffect, useRouter} from "expo-router";
+import {useCallback, useState} from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -18,31 +17,33 @@ import {
 import {SafeAreaView} from "react-native-safe-area-context";
 
 export default function RegisterScreen() {
-  const [name, setName] = useState("");
-  const [nickname, setNickname] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { setEmail, setPassword, email, password} = useReg()
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const {register} = useAuth();
+  const [error, setError] = useState('');
   const router = useRouter();
 
-  const handleRegister = async () => {
-    if (nickname.includes(" ")) {
-      setError("Никнейм не должен содержать пробелы");
-      return;
+  useFocusEffect(
+    useCallback(() => {
+      setIsSubmitting(false)
+    }, [])
+  )
+
+  const checkEmailCorectness = () => {
+    if (email.includes('@')) {
+      return true
     }
-    setIsSubmitting(true);
-    setError("");
-    try {
-      await register(email, password, nickname, name);
-    } catch {
-      setError("Ошибка регистрации. Проверьте все поля");
-    } finally {
-      setIsSubmitting(false);
+    setError('Неверный формат электронной почты')
+    return false
+  }
+
+  const checkPasswordCorectness = () => {
+    if (password.length >= 8) {
+      return true
     }
-  };
+    setError('Пароль должен содержать минимум 8 символов')
+    return false
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -61,38 +62,11 @@ export default function RegisterScreen() {
 
           <View style={styles.form}>
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>ИМЯ</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Name"
-                placeholderTextColor="#B8B6AF"
-                value={name}
-                onChangeText={setName}
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>НИКНЕЙМ</Text>
-              <View style={styles.nicknameWrapper}>
-                <Text style={styles.atSign}>@</Text>
-                <TextInput
-                  style={styles.nicknameInput}
-                  placeholder="nickname"
-                  placeholderTextColor="#B8B6AF"
-                  value={nickname}
-                  onChangeText={setNickname}
-                  autoCapitalize="none"
-                />
-              </View>
-            </View>
-
-            <View style={styles.fieldGroup}>
               <Text style={styles.label}>EMAIL</Text>
               <TextInput
                 style={styles.input}
                 placeholder="example@email.com"
                 placeholderTextColor="#B8B6AF"
-                value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
@@ -106,7 +80,6 @@ export default function RegisterScreen() {
                   style={styles.passwordInput}
                   placeholder="password"
                   placeholderTextColor="#B8B6AF"
-                  value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
@@ -123,11 +96,14 @@ export default function RegisterScreen() {
               </View>
             </View>
 
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-
             <Pressable
               style={[styles.btn, styles.btnCoral, isSubmitting && styles.btnDisabled]}
-              onPress={handleRegister}
+              onPress={() => {
+                if (checkEmailCorectness() && checkPasswordCorectness()) {
+                  setIsSubmitting(true)
+                  router.push('/(auth)/register-first-step')
+                }
+              }}
               disabled={isSubmitting}>
               <Text style={[styles.btnText, styles.btnTextLight]}>
                 Зарегистрироваться

@@ -24,32 +24,29 @@ export default function HomeScreen() {
 
   const {user} = useAuth();
 
-  // useEffect(() => {
-  //   const unsubscribe = client.subscribe(
-  //     `databases.${database_id}.tables.${profiles_table_id}.rows`,
-  //     (response) => {
-  //       if (response.events === 'idk'),
-  //       if (friendList.some((f) => f.addresseId === response.payload.$id)) {
-  //         // idk
-  //       }
-  //     },
-  //   );
-  //   return () => unsubscribe()
-  // }, []);
+  useEffect(() => {
+    fetchFriendsProfiles()
+    const unsubscribe = client.subscribe(
+      `databases.${database_id}.tables.${profiles_table_id}.rows`,
+      (responce) => {
+        const isUpdate = responce.events.some((event) =>
+          event.endsWith(".update"),
+        );
+        if (isUpdate) {
+          fetchFriendsProfiles()
+        }
+      },
+    );
+    return () => {
+      unsubscribe()
+    }
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       fetchFriendList();
     }, []),
   );
-
-  useEffect(() => {
-    if (friendList.length === 0) {
-      return;
-    } else {
-      fetchFriendsProfiles();
-    }
-  }, [friendList]);
 
   if (!user) {
     return null;
@@ -114,7 +111,13 @@ export default function HomeScreen() {
         <View style={styles.emptyState}>
           <View style={styles.emptyIcon}>
             <Svg width={50} height={50} viewBox="0 0 24 24" fill="none">
-              <Circle cx={12} cy={12} r={8.5} stroke="#B0AEA3" strokeWidth={1.6} />
+              <Circle
+                cx={12}
+                cy={12}
+                r={8.5}
+                stroke="#B0AEA3"
+                strokeWidth={1.6}
+              />
               <Path
                 d="M8.5 14.5a4.5 4.5 0 0 1 7 0"
                 stroke="#B0AEA3"

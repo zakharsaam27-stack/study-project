@@ -1,5 +1,15 @@
 import {Account, Client, TablesDB, Functions } from "react-native-appwrite";
 
+if (typeof window !== 'undefined' && !window.localStorage) {
+  (window as any).localStorage = {
+    getItem: (_: string) => null,
+    setItem: (_: string, __: string) => {},
+    removeItem: (_: string) => {},
+    clear: () => {},
+  };
+}
+
+
 export const client = new Client()
   .setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!)
   .setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!)
