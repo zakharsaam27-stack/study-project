@@ -1,4 +1,4 @@
-import { Client, Databases, ID } from 'node-appwrite';
+import { Client, Databases, Query } from 'node-appwrite';
 
 export default async ({ req, res, log, error }) => {
   const client = new Client()
@@ -7,21 +7,41 @@ export default async ({ req, res, log, error }) => {
     .setKey(process.env.APPWRITE_API_KEY);
   const databases = new Databases(client);
 
-  log('key defined: ' + !!process.env.APPWRITE_API_KEY);
-
-  log(JSON.stringify(req.body));
-
   const database_id = '6a33f1fa0031afe7debb';
   const friendship_table_id = 'friendships';
 
   const { rowId } = JSON.parse(req.body);
 
   try {
-    await databases.deleteDocument(database_id, friendship_table_id, rowId);
+    const friendship = await databases.getDocument(
+    database_id,
+    friendship_table_id,
+    rowId
+  );
+
+  const mirror = await databases.listDocuments(
+    database_id,
+    friendship_table_id,
+    [
+      Query.equal('requesterId', friendship.addresseeId),
+      Query.equal('addresseeId', friendship.requesterId),
+    ]
+  )
+
+  if (mirror.documents.length === 0) {
+    await databases.deleteDocument(database_id, friendship_table_id, rowId)
+    return res.json({
+    success: true
+  });
+}
+  const mirrorFriendship = mirror.documents[0]
+  
+    await databases.deleteDocument(database_id, friendship_table_id, friendship.$id)
+    await databases.deleteDocument(database_id, friendship_table_id, mirrorFriendship.$id)
   } catch (err) {
-    log('error: ' + err.message);
+    log('error: ' + err.message)
     return res.json({ success: false, error: err.message });
   }
 
-  return res.json({ success: true });
-};
+    return res.json({ success: true });
+}

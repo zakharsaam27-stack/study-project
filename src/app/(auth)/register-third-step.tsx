@@ -1,23 +1,23 @@
-import {useAuth} from "@/contexts/auth.context";
-import {useReg} from "@/contexts/reg.context";
-import {Ionicons} from "@expo/vector-icons";
-import {useState} from "react";
-import {Pressable, StyleSheet, Text, View} from "react-native";
-import {SafeAreaView} from "react-native-safe-area-context";
+import { useAuth } from "@/contexts/auth.context";
+import { useReg } from "@/contexts/reg.context";
+import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ThirdStepScreen() {
   const [isContinuing, setIsContinuing] = useState(false);
   const [isSkipping, setIsSkipping] = useState(false);
   const [error, setError] = useState("");
-  const {email, password, name, nickname} = useReg();
-  const {register} = useAuth();
+  const { email, password, name, nickname } = useReg();
+  const { register } = useAuth();
 
   const initials = name
     .trim()
     .split(" ")
     .filter(Boolean)
     .slice(0, 2)
-    .map(w => w[0].toUpperCase())
+    .map((w) => w[0].toUpperCase())
     .join("");
 
   const handleRegister = async (setLoading: (v: boolean) => void) => {
@@ -25,8 +25,9 @@ export default function ThirdStepScreen() {
     setError("");
     try {
       await register(email, password, nickname, name);
-    } catch {
+    } catch (err) {
       setError("Что то пошло не так");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -38,7 +39,7 @@ export default function ThirdStepScreen() {
         <View style={styles.progressRow}>
           <Text style={styles.stepLabel}>Шаг 3 из 3</Text>
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, {width: "100%"}]} />
+            <View style={[styles.progressFill, { width: "100%" }]} />
           </View>
         </View>
 
@@ -73,12 +74,14 @@ export default function ThirdStepScreen() {
           <Pressable
             style={[styles.btnCoral, isContinuing && styles.btnDisabled]}
             disabled={isContinuing || isSkipping}
-            onPress={() => handleRegister(setIsContinuing)}>
+            onPress={() => handleRegister(setIsContinuing)}
+          >
             <Text style={styles.btnCoralText}>Продолжить</Text>
           </Pressable>
           <Pressable
             disabled={isContinuing || isSkipping}
-            onPress={() => handleRegister(setIsSkipping)}>
+            onPress={() => handleRegister(setIsSkipping)}
+          >
             <Text style={styles.skipText}>Пропустить</Text>
           </Pressable>
         </View>

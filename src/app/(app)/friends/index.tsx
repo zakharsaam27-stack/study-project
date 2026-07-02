@@ -2,17 +2,19 @@
 // SEPARATE SCROLLVIEWS FOR SEARCHFRIENDS AND FRIENDSLIST,
 // STACKING, SEARCH BY NAME, FIX GAP WHEN EMPTY SEARCHFRIENDS RESUlt
 
-import {useAuth} from "@/contexts/auth.context";
+import { useAuth } from "@/contexts/auth.context";
 import {
   client,
   database_id,
   friendship_table_id,
+  functions,
   profiles_table_id,
+  reject_friend_function_id,
   tablesDB,
 } from "@/lib/appwrite";
-import {Ionicons} from "@expo/vector-icons";
-import {useFocusEffect, useRouter, useSegments} from "expo-router";
-import {useCallback, useEffect, useState} from "react";
+import { FontAwesome6, Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -21,8 +23,9 @@ import {
   TextInput,
   View,
 } from "react-native";
-import {Models, Query} from "react-native-appwrite";
-import {SafeAreaView} from "react-native-safe-area-context";
+import { Models, Query } from "react-native-appwrite";
+import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function FriendsScreen() {
   const [requests, setRequests] = useState<Models.DefaultRow[]>([]);
@@ -31,10 +34,17 @@ export default function FriendsScreen() {
     [],
   );
   const [searchFriend, setSearchFriend] = useState("");
+  const [error, setError] = useState("");
 
-  const {user} = useAuth();
+  const { user } = useAuth();
 
   const router = useRouter();
+
+  const friendListRef = useRef(friendList);
+
+  useEffect(() => {
+    friendListRef.current = friendList;
+  }, [friendList]);
 
   useEffect(() => {
     fetchFriendList();
@@ -46,23 +56,52 @@ export default function FriendsScreen() {
       () => {
         fetchFriendList();
         fetchRequests();
+        fetchFriendsProfiles();
       },
     );
     const unsubscribeProfiles = client.subscribe(
       `databases.${database_id}.tables.${profiles_table_id}.rows`,
       () => {
-        fetchFriendsProfiles()
+        fetchFriendsProfiles();
       },
     );
     return () => {
-      unsubscribeFriends()
-      unsubscribeProfiles()
-    }
+      unsubscribeFriends();
+      unsubscribeProfiles();
+    };
   }, []);
 
   if (!user) {
     return null;
   }
+
+  const renderRightActions = (friendShipId: string) => (
+    <View style={styles.friendDeletion}>
+      <Pressable
+        onPress={() => {
+          deleteFriend(friendShipId);
+        }}
+      >
+        <FontAwesome6 name="trash-can" size={20} color="#fff" />
+      </Pressable>
+    </View>
+  );
+
+  const deleteFriend = async (rowId: string) => {
+    const removedFriend = friendList.find((r) => r.$id === rowId);
+    setFriendList((prev) => prev.filter((r) => r.$id !== rowId));
+    try {
+      await functions.createExecution(
+        reject_friend_function_id,
+        JSON.stringify({ rowId }),
+      );
+    } catch (err) {
+      if (removedFriend) {
+        setFriendList((prev) => [...prev, removedFriend]);
+      }
+      setError("Что то пошло не так");
+    }
+  };
 
   const fetchRequests = async () => {
     const fetchRequestsResult = await tablesDB.listRows({
@@ -89,8 +128,9 @@ export default function FriendsScreen() {
   };
 
   const fetchFriendsProfiles = async () => {
+    console.log("friendList right now:", friendList);
     const profiles = await Promise.all(
-      friendList.map((friend) =>
+      friendListRef.current.map((friend) =>
         tablesDB.getRow({
           databaseId: database_id,
           tableId: profiles_table_id,
@@ -113,44 +153,107 @@ export default function FriendsScreen() {
           <Text style={styles.addButtonText}>Добавить</Text>
         </Pressable>
       </View>
-      {friendsProfiles.length === 0 ? (
-        <View style={styles.emptyState}>
-          <View style={styles.emptyIcon}>
-            <Ionicons name="person-add-outline" size={50} color="#B0AEA3" />
-          </View>
-          <Text style={styles.emptyTitle}>У тебя пока нет друзей</Text>
-          <Text style={styles.emptySubtitle}>
-            Добавь друзей по нику или поделись своей ссылкой.
-          </Text>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={18} color="#888780" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Поиск по никнейму"
+            placeholderTextColor="#888780"
+            autoCapitalize="none"
+            onChangeText={setSearchFriend}
+          />
         </View>
-      ) : (
-        <ScrollView>
-          <View style={styles.searchBar}>
-            <Ionicons name="search" size={18} color="#888780" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Поиск по никнейму"
-              placeholderTextColor="#888780"
-              autoCapitalize="none"
-              onChangeText={setSearchFriend}
-            />
-          </View>
 
-          {searchFriend && (
-            <View style={styles.searchResult}>
-              {friendsProfiles
-                .filter((f) => f.nickname.startsWith(searchFriend))
-                .map((friend) => (
-                  <View key={friend.$id} style={styles.friendCard}>
-                    <View style={styles.avatar}>
-                      <Text style={styles.avatarInitials}>
-                        {(friend.name as string)
-                          .split(" ")
-                          .map((w) => w[0])
-                          .join("")
-                          .toUpperCase()
-                          .slice(0, 2)}
-                      </Text>
+        {searchFriend && (
+          <View style={styles.searchResult}>
+            {friendsProfiles
+              .filter((f) => f.nickname.startsWith(searchFriend))
+              .map((friend) => (
+                <View key={friend.$id} style={styles.friendCard}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarInitials}>
+                      {(friend.name as string)
+                        .split(" ")
+                        .map((w) => w[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)}
+                    </Text>
+                  </View>
+                  <View style={styles.friendInfo}>
+                    <Text style={styles.friendName}>
+                      {friend.name as string}
+                    </Text>
+                    <Text style={styles.friendNickname}>
+                      @{friend.nickname as string}
+                    </Text>
+                  </View>
+                  <View style={styles.statusPill}>
+                    <Text style={styles.statusText}>
+                      {friend.statusEmoji as string}{" "}
+                      {friend.statusText as string}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+          </View>
+        )}
+
+        <Pressable
+          style={styles.requestsCard}
+          onPress={() => router.push("/(app)/friends/requests")}
+        >
+          <View style={styles.requestsIcon}>
+            <Ionicons name="person-add" size={18} color="#fff" />
+          </View>
+          <View style={styles.friendInfo}>
+            <Text style={styles.requestsTitle}>Входящие заявки</Text>
+            <Text style={styles.requestsSubtitle}>
+              {requests.length} человек хотят дружить
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#D85A30" />
+        </Pressable>
+        <Text style={styles.sectionLabel}>Все друзья</Text>
+
+        {friendsProfiles.length === 0 ? (
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIcon}>
+              <Ionicons name="person-add-outline" size={50} color="#B0AEA3" />
+            </View>
+            <Text style={styles.emptyTitle}>У тебя пока нет друзей</Text>
+            <Text style={styles.emptySubtitle}>
+              Добавь друзей по нику или поделись своей ссылкой.
+            </Text>
+          </View>
+        ) : (
+          <View>
+            {friendsProfiles.map((friend) => {
+              const friendShipRow = friendList.find(
+                (r) => r.addresseeId === friend.$id,
+              );
+              return (
+                <Swipeable
+                  key={friend.$id}
+                  renderRightActions={() =>
+                    renderRightActions(friendShipRow?.$id ?? "")
+                  }
+                  rightThreshold={44}
+                >
+                  <View style={styles.friendCard}>
+                    <View style={styles.avatarWrapper}>
+                      <View style={styles.avatar}>
+                        <Text style={styles.avatarInitials}>
+                          {(friend.name as string)
+                            .split(" ")
+                            .map((w) => w[0])
+                            .join("")
+                            .toUpperCase()
+                            .slice(0, 2)}
+                        </Text>
+                      </View>
+                      <View style={styles.avatarDot} />
                     </View>
                     <View style={styles.friendInfo}>
                       <Text style={styles.friendName}>
@@ -167,66 +270,27 @@ export default function FriendsScreen() {
                       </Text>
                     </View>
                   </View>
-                ))}
-            </View>
-          )}
-
-          <Pressable
-            style={styles.requestsCard}
-            onPress={() => router.push("/(app)/friends/requests")}
-          >
-            <View style={styles.requestsIcon}>
-              <Ionicons name="person-add" size={18} color="#fff" />
-            </View>
-            <View style={styles.friendInfo}>
-              <Text style={styles.requestsTitle}>Входящие заявки</Text>
-              <Text style={styles.requestsSubtitle}>
-                {requests.length} человек хотят дружить
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#D85A30" />
-          </Pressable>
-          <Text style={styles.sectionLabel}>Все друзья</Text>
-          <View>
-            {friendsProfiles.map((friend) => (
-              <View style={styles.friendCard} key={friend.$id}>
-                <View style={styles.avatarWrapper}>
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarInitials}>
-                      {(friend.name as string)
-                        .split(" ")
-                        .map((w) => w[0])
-                        .join("")
-                        .toUpperCase()
-                        .slice(0, 2)}
-                    </Text>
-                  </View>
-                  <View style={styles.avatarDot} />
-                </View>
-                <View style={styles.friendInfo}>
-                  <Text style={styles.friendName}>{friend.name as string}</Text>
-                  <Text style={styles.friendNickname}>
-                    @{friend.nickname as string}
-                  </Text>
-                </View>
-                <View style={styles.statusPill}>
-                  <Text style={styles.statusText}>
-                    {friend.statusEmoji as string} {friend.statusText as string}
-                  </Text>
-                </View>
-              </View>
-            ))}
+                </Swipeable>
+              );
+            })}
             <Text style={styles.hint}>Смахни влево, чтобы удалить друга</Text>
-            <Text style={styles.hint}>(Coming soon)</Text>
           </View>
-        </ScrollView>
-      )}
+        )}
+      </ScrollView>
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: "#F1EFE8"},
+  container: { flex: 1, backgroundColor: "#F1EFE8" },
+  scrollContent: { flexGrow: 1 },
+  errorText: {
+    textAlign: "center",
+    fontSize: 13,
+    color: "#D85A30",
+    paddingVertical: 8,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -250,7 +314,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 5,
   },
-  addButtonText: {color: "#fff", fontSize: 14, fontWeight: "600"},
+  addButtonText: { color: "#fff", fontSize: 14, fontWeight: "600" },
   searchBar: {
     marginHorizontal: 18,
     height: 44,
@@ -288,8 +352,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  requestsTitle: {fontSize: 15, fontWeight: "600", color: "#712B13"},
-  requestsSubtitle: {fontSize: 13, color: "#9a5d40", marginTop: 2},
+  requestsTitle: { fontSize: 15, fontWeight: "600", color: "#712B13" },
+  requestsSubtitle: { fontSize: 13, color: "#9a5d40", marginTop: 2 },
   sectionLabel: {
     marginHorizontal: 18,
     marginTop: 14,
@@ -301,7 +365,6 @@ const styles = StyleSheet.create({
     color: "#888780",
   },
   friendCard: {
-    marginHorizontal: 18,
     marginBottom: 8,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
@@ -345,16 +408,16 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-  friendName: {fontSize: 15, fontWeight: "500", color: "#2C2C2A"},
-  friendNickname: {fontSize: 13, color: "#888780"},
+  friendName: { fontSize: 15, fontWeight: "500", color: "#2C2C2A" },
+  friendNickname: { fontSize: 13, color: "#888780" },
   statusPill: {
     backgroundColor: "#E1F5EE",
     borderRadius: 999,
     paddingHorizontal: 9,
     paddingVertical: 3,
   },
-  statusText: {fontSize: 12, fontWeight: "500", color: "#085041"},
-  hint: {textAlign: "center", fontSize: 12, color: "#a8a79f", marginTop: 8},
+  statusText: { fontSize: 12, fontWeight: "500", color: "#085041" },
+  hint: { textAlign: "center", fontSize: 12, color: "#a8a79f", marginTop: 8 },
   searchResult: {
     marginTop: 14,
   },
@@ -387,5 +450,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     maxWidth: 250,
     marginTop: 8,
+  },
+  friendDeletion: {
+    width: 72,
+    backgroundColor: "#C0392B",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 14,
+    marginHorizontal: 18,
   },
 });
