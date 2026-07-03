@@ -2,7 +2,7 @@
 // SEPARATE SCROLLVIEWS FOR SEARCHFRIENDS AND FRIENDSLIST,
 // STACKING, SEARCH BY NAME, FIX GAP WHEN EMPTY SEARCHFRIENDS RESUlt
 
-import { useAuth } from "@/contexts/auth.context";
+import {useAuth} from "@/contexts/auth.context";
 import {
   client,
   database_id,
@@ -12,20 +12,23 @@ import {
   reject_friend_function_id,
   tablesDB,
 } from "@/lib/appwrite";
-import { FontAwesome6, Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import {FontAwesome6, Ionicons} from "@expo/vector-icons";
+import {useFocusEffect, useRouter} from "expo-router";
+import {useCallback, useEffect, useState} from "react";
 import {
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from "react-native";
-import { Models, Query } from "react-native-appwrite";
+import {Models, Query} from "react-native-appwrite";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {SafeAreaView} from "react-native-safe-area-context";
+
+const isFreeStatus = (statusText: string) => statusText === "Свободен";
 
 export default function FriendsScreen() {
   const [requests, setRequests] = useState<Models.DefaultRow[]>([]);
@@ -36,15 +39,12 @@ export default function FriendsScreen() {
   const [searchFriend, setSearchFriend] = useState("");
   const [error, setError] = useState("");
 
-  const { user } = useAuth();
+  const {user} = useAuth();
 
   const router = useRouter();
 
-  const friendListRef = useRef(friendList);
-
-  useEffect(() => {
-    friendListRef.current = friendList;
-  }, [friendList]);
+  const {width: windowWidth} = useWindowDimensions();
+  const cardRowWidth = windowWidth - 36;
 
   useEffect(() => {
     fetchFriendList();
@@ -76,8 +76,12 @@ export default function FriendsScreen() {
   }
 
   const renderRightActions = (friendShipId: string) => (
-    <View style={styles.friendDeletion}>
+    <View style={styles.friendDeletionReveal}>
       <Pressable
+        style={[
+          styles.friendDeletion,
+          {width: cardRowWidth, position: "absolute", right: 0, top: 0, bottom: 0},
+        ]}
         onPress={() => {
           deleteFriend(friendShipId);
         }}
@@ -93,7 +97,7 @@ export default function FriendsScreen() {
     try {
       await functions.createExecution(
         reject_friend_function_id,
-        JSON.stringify({ rowId }),
+        JSON.stringify({rowId}),
       );
     } catch (err) {
       if (removedFriend) {
@@ -128,9 +132,17 @@ export default function FriendsScreen() {
   };
 
   const fetchFriendsProfiles = async () => {
-    console.log("friendList right now:", friendList);
+    const fetchFriendListResult = await tablesDB.listRows({
+      databaseId: database_id,
+      tableId: friendship_table_id,
+      queries: [
+        Query.equal("status", "accepted"),
+        Query.equal("requesterId", user.$id),
+      ],
+    });
+
     const profiles = await Promise.all(
-      friendListRef.current.map((friend) =>
+      fetchFriendListResult.rows.map((friend) =>
         tablesDB.getRow({
           databaseId: database_id,
           tableId: profiles_table_id,
@@ -144,7 +156,9 @@ export default function FriendsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Друзья {friendList.length}</Text>
+        <Text style={styles.title}>
+          Друзья <Text style={styles.titleCount}>{friendList.length}</Text>
+        </Text>
         <Pressable
           style={styles.addButton}
           onPress={() => router.push("/(app)/friends/add-friend")}
@@ -189,8 +203,20 @@ export default function FriendsScreen() {
                       @{friend.nickname as string}
                     </Text>
                   </View>
-                  <View style={styles.statusPill}>
-                    <Text style={styles.statusText}>
+                  <View
+                    style={[
+                      styles.statusPill,
+                      !isFreeStatus(friend.statusText as string) &&
+                        styles.statusPillBusy,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusText,
+                        !isFreeStatus(friend.statusText as string) &&
+                          styles.statusTextBusy,
+                      ]}
+                    >
                       {friend.statusEmoji as string}{" "}
                       {friend.statusText as string}
                     </Text>
@@ -213,7 +239,7 @@ export default function FriendsScreen() {
               {requests.length} человек хотят дружить
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#D85A30" />
+          <Ionicons name="chevron-forward" size={22} color="#D85A30" />
         </Pressable>
         <Text style={styles.sectionLabel}>Все друзья</Text>
 
@@ -234,14 +260,15 @@ export default function FriendsScreen() {
                 (r) => r.addresseeId === friend.$id,
               );
               return (
+                <View key={friend.$id} style={styles.friendCardRow}>
                 <Swipeable
-                  key={friend.$id}
                   renderRightActions={() =>
                     renderRightActions(friendShipRow?.$id ?? "")
                   }
                   rightThreshold={44}
+                  overshootRight={false}
                 >
-                  <View style={styles.friendCard}>
+                  <View style={[styles.friendCard, styles.friendCardNoMargin]}>
                     <View style={styles.avatarWrapper}>
                       <View style={styles.avatar}>
                         <Text style={styles.avatarInitials}>
@@ -263,14 +290,27 @@ export default function FriendsScreen() {
                         @{friend.nickname as string}
                       </Text>
                     </View>
-                    <View style={styles.statusPill}>
-                      <Text style={styles.statusText}>
+                    <View
+                      style={[
+                        styles.statusPill,
+                        !isFreeStatus(friend.statusText as string) &&
+                          styles.statusPillBusy,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.statusText,
+                          !isFreeStatus(friend.statusText as string) &&
+                            styles.statusTextBusy,
+                        ]}
+                      >
                         {friend.statusEmoji as string}{" "}
                         {friend.statusText as string}
                       </Text>
                     </View>
                   </View>
                 </Swipeable>
+                </View>
               );
             })}
             <Text style={styles.hint}>Смахни влево, чтобы удалить друга</Text>
@@ -283,8 +323,8 @@ export default function FriendsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F1EFE8" },
-  scrollContent: { flexGrow: 1 },
+  container: {flex: 1, backgroundColor: "#F1EFE8"},
+  scrollContent: {flexGrow: 1},
   errorText: {
     textAlign: "center",
     fontSize: 13,
@@ -305,6 +345,10 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
     color: "#2C2C2A",
   },
+  titleCount: {
+    color: "#888780",
+    fontWeight: "600",
+  },
   addButton: {
     height: 34,
     paddingHorizontal: 13,
@@ -314,7 +358,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 5,
   },
-  addButtonText: { color: "#fff", fontSize: 14, fontWeight: "600" },
+  addButtonText: {color: "#fff", fontSize: 14, fontWeight: "600"},
   searchBar: {
     marginHorizontal: 18,
     height: 44,
@@ -339,7 +383,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#EFC8B6",
     borderRadius: 14,
-    padding: 13,
+    paddingVertical: 13,
+    paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
@@ -352,8 +397,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  requestsTitle: { fontSize: 15, fontWeight: "600", color: "#712B13" },
-  requestsSubtitle: { fontSize: 13, color: "#9a5d40", marginTop: 2 },
+  requestsTitle: {fontSize: 15, fontWeight: "600", color: "#712B13"},
+  requestsSubtitle: {fontSize: 13, color: "#9a5d40", marginTop: 2},
   sectionLabel: {
     marginHorizontal: 18,
     marginTop: 14,
@@ -364,16 +409,31 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     color: "#888780",
   },
+  friendCardRow: {
+    marginHorizontal: 18,
+    marginBottom: 10,
+  },
+  friendCardNoMargin: {
+    marginHorizontal: 0,
+    marginBottom: 0,
+  },
   friendCard: {
-    marginBottom: 8,
+    marginHorizontal: 18,
+    marginBottom: 10,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#D3D1C7",
     borderRadius: 14,
-    padding: 11,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    shadowColor: "#281E14",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   avatarWrapper: {
     position: "relative",
@@ -408,16 +468,20 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-  friendName: { fontSize: 15, fontWeight: "500", color: "#2C2C2A" },
-  friendNickname: { fontSize: 13, color: "#888780" },
+  friendName: {fontSize: 15, fontWeight: "500", color: "#2C2C2A"},
+  friendNickname: {fontSize: 13, color: "#888780"},
   statusPill: {
     backgroundColor: "#E1F5EE",
     borderRadius: 999,
     paddingHorizontal: 9,
     paddingVertical: 3,
   },
-  statusText: { fontSize: 12, fontWeight: "500", color: "#085041" },
-  hint: { textAlign: "center", fontSize: 12, color: "#a8a79f", marginTop: 8 },
+  statusPillBusy: {
+    backgroundColor: "#F1EFE8",
+  },
+  statusText: {fontSize: 12, fontWeight: "500", color: "#085041"},
+  statusTextBusy: {color: "#5F5E5A"},
+  hint: {textAlign: "center", fontSize: 12, color: "#a8a79f", marginTop: 8},
   searchResult: {
     marginTop: 14,
   },
@@ -451,12 +515,15 @@ const styles = StyleSheet.create({
     maxWidth: 250,
     marginTop: 8,
   },
+  friendDeletionReveal: {
+    width: 65,
+  },
   friendDeletion: {
-    width: 72,
     backgroundColor: "#C0392B",
-    justifyContent: "center",
-    alignItems: "center",
     borderRadius: 14,
-    marginHorizontal: 18,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    paddingRight: 24,
   },
 });

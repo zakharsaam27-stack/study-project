@@ -25,28 +25,27 @@ export default function HomeScreen() {
   const {user} = useAuth();
 
   useEffect(() => {
-    fetchFriendsProfiles()
-    const unsubscribe = client.subscribe(
+    fetchFriendList();
+    fetchFriendsProfiles();
+
+    const unsubscribeFriends = client.subscribe(
+      `databases.${database_id}.tables.${friendship_table_id}.rows`,
+      () => {
+        fetchFriendList();
+        fetchFriendsProfiles();
+      },
+    );
+    const unsubscribeProfiles = client.subscribe(
       `databases.${database_id}.tables.${profiles_table_id}.rows`,
-      (responce) => {
-        const isUpdate = responce.events.some((event) =>
-          event.endsWith(".update"),
-        );
-        if (isUpdate) {
-          fetchFriendsProfiles()
-        }
+      () => {
+        fetchFriendsProfiles();
       },
     );
     return () => {
-      unsubscribe()
-    }
+      unsubscribeFriends();
+      unsubscribeProfiles();
+    };
   }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchFriendList();
-    }, []),
-  );
 
   if (!user) {
     return null;
@@ -82,8 +81,17 @@ export default function HomeScreen() {
   };
 
   const fetchFriendsProfiles = async () => {
+    const fetchFriendListResult = await tablesDB.listRows({
+      databaseId: database_id,
+      tableId: friendship_table_id,
+      queries: [
+        Query.equal("status", "accepted"),
+        Query.equal("requesterId", user.$id),
+      ],
+    });
+
     const profiles = await Promise.all(
-      friendList.map((friend) =>
+      fetchFriendListResult.rows.map((friend) =>
         tablesDB.getRow({
           databaseId: database_id,
           tableId: profiles_table_id,

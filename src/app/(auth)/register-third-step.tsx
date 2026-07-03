@@ -1,30 +1,25 @@
-import { useAuth } from "@/contexts/auth.context";
-import { useReg } from "@/contexts/reg.context";
-import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {useAuth} from "@/contexts/auth.context";
+import {useReg} from "@/contexts/reg.context";
+import {Ionicons} from "@expo/vector-icons";
+import {useState} from "react";
+import {Pressable, StyleSheet, Text, View} from "react-native";
+import {SafeAreaView} from "react-native-safe-area-context";
+import * as ImagePicker from "expo-image-picker";
+import {Avatar} from "@/components/Avatar";
 
 export default function ThirdStepScreen() {
   const [isContinuing, setIsContinuing] = useState(false);
   const [isSkipping, setIsSkipping] = useState(false);
   const [error, setError] = useState("");
-  const { email, password, name, nickname } = useReg();
-  const { register } = useAuth();
-
-  const initials = name
-    .trim()
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
-    .join("");
+  const {email, password, name, nickname, setAvatarAsset, avatarAsset} =
+    useReg();
+  const {register} = useAuth();
 
   const handleRegister = async (setLoading: (v: boolean) => void) => {
     setLoading(true);
     setError("");
     try {
-      await register(email, password, nickname, name);
+      await register(email, password, nickname, name, avatarAsset);
     } catch (err) {
       setError("Что то пошло не так");
       console.error(err);
@@ -33,13 +28,45 @@ export default function ThirdStepScreen() {
     }
   };
 
+  const handlePickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      const asset = result.assets[0];
+      setAvatarAsset({
+        uri: asset.uri,
+        fileName: asset.fileName ?? `avatar-${Date.now()}.jpg`,
+        mimeType: asset.mimeType ?? "image/jpg",
+        fileSize: asset.fileSize ?? 0,
+      });
+    }
+  };
+
+  const handleTakePicture = async () => {
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
+      if (!result.canceled){
+        const asset = result.assets[0]
+        setAvatarAsset({
+          uri: asset.uri,
+          fileName: asset.fileName ?? `avatar-${Date.now()}.jpg`,
+          mimeType: asset.mimeType ?? "image/jpg",
+          fileSize: asset.fileSize ?? 0,
+        })
+      }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.inner}>
         <View style={styles.progressRow}>
           <Text style={styles.stepLabel}>Шаг 3 из 3</Text>
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: "100%" }]} />
+            <View style={[styles.progressFill, {width: "100%"}]} />
           </View>
         </View>
 
@@ -49,19 +76,21 @@ export default function ThirdStepScreen() {
         </View>
 
         <View style={styles.avatarWrapper}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarInitials}>{initials || "?"}</Text>
-          </View>
+          <Avatar
+            source={avatarAsset ? {uri: avatarAsset.uri} : null}
+            name={name}
+            size={124}
+          />
           <View style={styles.avatarCameraBtn}>
             <Ionicons name="camera" size={16} color="#FFFFFF" />
           </View>
         </View>
 
         <View style={styles.pickerBtns}>
-          <Pressable style={styles.btnOutlineCoral}>
+          <Pressable style={styles.btnOutlineCoral} onPress={handlePickImage}>
             <Text style={styles.btnOutlineCoralText}>Выбрать из галереи</Text>
           </Pressable>
-          <Pressable style={styles.btnOutlineGray}>
+          <Pressable style={styles.btnOutlineGray} onPress={handleTakePicture}>
             <Text style={styles.btnOutlineGrayText}>Сделать фото</Text>
           </Pressable>
         </View>
@@ -145,19 +174,6 @@ const styles = StyleSheet.create({
     position: "relative",
     width: 124,
     height: 124,
-  },
-  avatarCircle: {
-    width: 124,
-    height: 124,
-    borderRadius: 999,
-    backgroundColor: "#FAECE7",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarInitials: {
-    fontSize: 42,
-    fontWeight: "600",
-    color: "#712B13",
   },
   avatarCameraBtn: {
     position: "absolute",

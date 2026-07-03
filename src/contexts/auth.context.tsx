@@ -1,17 +1,26 @@
 import {
   account,
+  avatars_bucket_id,
   database_id,
   profiles_table_id,
+  storage,
   tablesDB,
 } from "@/lib/appwrite";
 import React, {createContext, useContext, useEffect, useState} from "react";
 import {ID, Models, Permission, Role} from "react-native-appwrite";
+import {AvatarAsset} from "./reg.context";
 
 type AuthContextType = {
   user: Models.User<Models.Preferences> | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, nickname: string, name: string) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    nickname: string,
+    name: string,
+    avatarAsset: AvatarAsset | null,
+  ) => Promise<void>;
   logOut: () => Promise<void>;
 };
 
@@ -42,14 +51,39 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
     const loggedInUser = await account.get();
     setUser(loggedInUser);
   };
-  const register = async (email: string, password: string, nickname: string, name: string) => {
+  const register = async (
+    email: string,
+    password: string,
+    nickname: string,
+    name: string,
+    avatarAsset: AvatarAsset | null,
+  ) => {
     const newUser = await account.create({
       userId: ID.unique(),
       email,
       password,
-      name
+      name,
     });
     await login(email, password);
+
+    let uploadedFile
+    if (avatarAsset !== null) {
+      uploadedFile = await storage.createFile({
+        bucketId: avatars_bucket_id,
+        fileId: ID.unique(),
+        file: {name: avatarAsset.fileName, type: avatarAsset.mimeType, size: avatarAsset.fileSize, uri: avatarAsset.uri},
+        permissions: [
+          Permission.update(Role.user(newUser.$id)),
+          Permission.delete(Role.user(newUser.$id)),
+        ],
+      });
+    }
+
+    let avatarURL
+    if (uploadedFile) {
+      avatarURL = storage.getFileViewURL(avatars_bucket_id, uploadedFile.$id).toString()
+    }
+
     await tablesDB.createRow({
       databaseId: database_id,
       tableId: profiles_table_id,
@@ -57,7 +91,7 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
       data: {
         nickname: nickname,
         name: name,
-        avatarURL: "",
+        avatarURL: avatarURL,
         statusEmoji: "🤔",
         statusText: "Неизвестно",
         statusUpdatedAt: new Date().toISOString(),
