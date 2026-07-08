@@ -6,7 +6,7 @@ import {SafeAreaView} from "react-native-safe-area-context";
 import Svg, {Circle, Path} from "react-native-svg";
 import {useAuth} from "@/contexts/auth.context";
 import {useFocusEffect} from "expo-router";
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useState} from "react";
 import {Models, Query} from "react-native-appwrite";
 import {
   client,
@@ -15,6 +15,7 @@ import {
   profiles_table_id,
   tablesDB,
 } from "@/lib/appwrite";
+import {Avatar} from "@/components/Avatar";
 
 export default function HomeScreen() {
   const [friendList, setFriendList] = useState<Models.DefaultRow[]>([]);
@@ -24,28 +25,30 @@ export default function HomeScreen() {
 
   const {user} = useAuth();
 
-  useEffect(() => {
-    fetchFriendList();
-    fetchFriendsProfiles();
+  useFocusEffect(
+    useCallback(() => {
+      fetchFriendList();
+      fetchFriendsProfiles();
 
-    const unsubscribeFriends = client.subscribe(
-      `databases.${database_id}.tables.${friendship_table_id}.rows`,
-      () => {
-        fetchFriendList();
-        fetchFriendsProfiles();
-      },
-    );
-    const unsubscribeProfiles = client.subscribe(
-      `databases.${database_id}.tables.${profiles_table_id}.rows`,
-      () => {
-        fetchFriendsProfiles();
-      },
-    );
-    return () => {
-      unsubscribeFriends();
-      unsubscribeProfiles();
-    };
-  }, []);
+      const unsubscribeFriends = client.subscribe(
+        `databases.${database_id}.tables.${friendship_table_id}.rows`,
+        () => {
+          fetchFriendList();
+          fetchFriendsProfiles();
+        },
+      );
+      const unsubscribeProfiles = client.subscribe(
+        `databases.${database_id}.tables.${profiles_table_id}.rows`,
+        () => {
+          fetchFriendsProfiles();
+        },
+      );
+      return () => {
+        unsubscribeFriends();
+        unsubscribeProfiles();
+      };
+    }, []),
+  );
 
   if (!user) {
     return null;
@@ -109,7 +112,6 @@ export default function HomeScreen() {
         <Ionicons name="notifications-outline" size={22} color="#2C2C2A" />
       </View>
       <View style={styles.freeRow}>
-        <View style={styles.greenDot} />
         <Text style={styles.freeText}>
           <Text style={styles.freeTextBold}>{friendList.length} друга </Text>
           свободны сейчас
@@ -153,16 +155,12 @@ export default function HomeScreen() {
             <View style={styles.friendCard} key={friend.$id}>
               <View style={styles.avatarWrapper}>
                 <View style={styles.avatar}>
-                  <Text style={styles.avatarInitials}>
-                    {(friend.name as string)
-                      .split(" ")
-                      .map((w) => w[0])
-                      .join("")
-                      .toUpperCase()
-                      .slice(0, 2)}
-                  </Text>
+                  <Avatar
+                    source={friend.avatarURL ? {uri: friend.avatarURL} : null}
+                    name={friend.name}
+                    size={44}
+                  />
                 </View>
-                <View style={styles.avatarDot} />
               </View>
               <View style={styles.friendInfo}>
                 <Text style={styles.friendName}>{friend.name as string}</Text>
@@ -208,12 +206,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 10,
     gap: 8,
-  },
-  greenDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#1D9E75",
   },
   freeText: {
     fontSize: 14,
@@ -264,17 +256,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: "#712B13",
-  },
-  avatarDot: {
-    position: "absolute",
-    right: -1,
-    bottom: -1,
-    width: 13,
-    height: 13,
-    borderRadius: 999,
-    backgroundColor: "#1D9E75",
-    borderWidth: 2.5,
-    borderColor: "#FFFFFF",
   },
   friendInfo: {
     flex: 1,

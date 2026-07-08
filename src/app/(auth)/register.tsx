@@ -54,7 +54,9 @@ export default function RegisterScreen() {
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
-            <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Pressable
+              onPress={() => router.back()}
+              style={({pressed}) => [styles.backBtn, pressed && {opacity: 0.7}]}>
               <Ionicons name="chevron-back" size={26} color="#2C2C2A" />
             </Pressable>
             <Text style={styles.title}>Создать аккаунт</Text>
@@ -86,7 +88,7 @@ export default function RegisterScreen() {
                 />
                 <Pressable
                   onPress={() => setShowPassword((v) => !v)}
-                  style={styles.eyeBtn}>
+                  style={({pressed}) => [styles.eyeBtn, pressed && {opacity: 0.7}]}>
                   <Ionicons
                     name={showPassword ? "eye" : "eye-off"}
                     size={20}
@@ -97,7 +99,12 @@ export default function RegisterScreen() {
             </View>
 
             <Pressable
-              style={[styles.btn, styles.btnCoral, isSubmitting && styles.btnDisabled]}
+              style={({pressed}) => [
+                styles.btn,
+                styles.btnCoral,
+                isSubmitting && styles.btnDisabled,
+                pressed && {opacity: 0.7},
+              ]}
               onPress={() => {
                 if (checkEmailCorectness() && checkPasswordCorectness()) {
                   setIsSubmitting(true)
@@ -116,12 +123,22 @@ export default function RegisterScreen() {
               <View style={styles.dividerLine} />
             </View>
 
-            <Pressable style={[styles.btn, styles.btnBlack]}>
+            <Pressable
+              style={({pressed}) => [
+                styles.btn,
+                styles.btnBlack,
+                pressed && {opacity: 0.7},
+              ]}>
               <Ionicons name="logo-apple" size={18} color="#fff" />
               <Text style={[styles.btnText, styles.btnTextLight]}>Apple</Text>
             </Pressable>
 
-            <Pressable style={[styles.btn, styles.btnWhite]}>
+            <Pressable
+              style={({pressed}) => [
+                styles.btn,
+                styles.btnWhite,
+                pressed && {opacity: 0.7},
+              ]}>
               <Ionicons name="logo-google" size={18} color="#2C2C2A" />
               <Text style={[styles.btnText, styles.btnTextDark]}>Google</Text>
             </Pressable>

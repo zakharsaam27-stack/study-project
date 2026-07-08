@@ -73,7 +73,7 @@ export default function SecondStepScreen() {
         <View style={styles.spacer} />
 
         <Pressable
-          style={styles.btn}
+          style={({pressed}) => [styles.btn, pressed && {opacity: 0.7}]}
           onPress={() => {
             if (emptyNameCheck()) router.push("/(auth)/register-third-step");
           }}>

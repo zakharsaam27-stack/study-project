@@ -83,7 +83,10 @@ export default function AddFriendScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+        <Pressable
+          onPress={() => router.back()}
+          style={({pressed}) => [styles.backBtn, pressed && {opacity: 0.7}]}
+        >
           <Ionicons name="chevron-back" size={26} color="#2C2C2A" />
         </Pressable>
         <Text style={styles.title}>Добавить друга</Text>
@@ -102,7 +105,7 @@ export default function AddFriendScreen() {
       </View>
       <View style={styles.section}>
         <Pressable
-          style={styles.sendButton}
+          style={({pressed}) => [styles.sendButton, pressed && {opacity: 0.7}]}
           onPress={() => handleSendRequest(searchText.trim())}
         >
           <Ionicons name="add" size={18} color="#fff" />
@@ -117,11 +120,15 @@ export default function AddFriendScreen() {
         <View style={styles.dividerLine} />
       </View>
       <View style={styles.section}>
-        <Pressable style={styles.secondaryButton}>
+        <Pressable
+          style={({pressed}) => [styles.secondaryButton, pressed && {opacity: 0.7}]}
+        >
           <Ionicons name="copy-outline" size={18} color="#2C2C2A" />
           <Text style={styles.secondaryButtonText}>Скопировать ссылку (Coming soon)</Text>
         </Pressable>
-        <Pressable style={styles.secondaryButton}>
+        <Pressable
+          style={({pressed}) => [styles.secondaryButton, pressed && {opacity: 0.7}]}
+        >
           <Ionicons name="share-social-outline" size={18} color="#2C2C2A" />
           <Text style={styles.secondaryButtonText}>Поделиться ссылкой (Coming soon)</Text>
         </Pressable>

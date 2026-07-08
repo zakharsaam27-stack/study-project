@@ -21,7 +21,11 @@ export default function LoginGreetingScreen() {
 
       <View style={styles.bottom}>
         <Pressable
-          style={[styles.btn, styles.btnCoral]}
+          style={({pressed}) => [
+            styles.btn,
+            styles.btnCoral,
+            pressed && {opacity: 0.7},
+          ]}
           onPress={() => router.push("/(auth)/login")}>
           <Ionicons name="mail" size={19} color="#fff" />
           <Text style={[styles.btnText, styles.btnTextLight]}>
@@ -29,14 +33,24 @@ export default function LoginGreetingScreen() {
           </Text>
         </Pressable>
 
-        <Pressable style={[styles.btn, styles.btnBlack]}>
+        <Pressable
+          style={({pressed}) => [
+            styles.btn,
+            styles.btnBlack,
+            pressed && {opacity: 0.7},
+          ]}>
           <Ionicons name="logo-apple" size={18} color="#fff" />
           <Text style={[styles.btnText, styles.btnTextLight]}>
             Войти через Apple
           </Text>
         </Pressable>
 
-        <Pressable style={[styles.btn, styles.btnWhite]}>
+        <Pressable
+          style={({pressed}) => [
+            styles.btn,
+            styles.btnWhite,
+            pressed && {opacity: 0.7},
+          ]}>
           <Ionicons name="logo-google" size={18} color="#2C2C2A" />
           <Text style={[styles.btnText, styles.btnTextDark]}>
             Войти через Google
@@ -45,7 +59,9 @@ export default function LoginGreetingScreen() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Нет аккаунта? </Text>
-          <Pressable onPress={() => router.push("/(auth)/register-greeting")}>
+          <Pressable
+            onPress={() => router.push("/(auth)/register-greeting")}
+            style={({pressed}) => pressed && {opacity: 0.7}}>
             <Text style={styles.footerLink}>Создать</Text>
           </Pressable>
         </View>
@@ -114,6 +130,8 @@ const styles = StyleSheet.create({
     color: "#2C2C2A",
     textAlign: "center",
     lineHeight: 28,
+    minHeight: 56,
+    textAlignVertical: "center",
   },
   bottom: {
     gap: 10,

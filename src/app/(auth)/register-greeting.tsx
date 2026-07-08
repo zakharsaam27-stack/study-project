@@ -11,7 +11,6 @@ export default function RegisterGreetingScreen() {
       <View style={styles.center}>
         <View style={styles.appIcon}>
           <View style={styles.appIconCircle} />
-          <View style={styles.appIconDot} />
         </View>
         <View style={styles.titleGroup}>
           <Text style={styles.appName}>PingMe</Text>
@@ -21,7 +20,11 @@ export default function RegisterGreetingScreen() {
 
       <View style={styles.bottom}>
         <Pressable
-          style={[styles.btn, styles.btnCoral]}
+          style={({pressed}) => [
+            styles.btn,
+            styles.btnCoral,
+            pressed && {opacity: 0.7},
+          ]}
           onPress={() => router.push("/(auth)/register")}>
           <Ionicons name="mail" size={19} color="#fff" />
           <Text style={[styles.btnText, styles.btnTextLight]}>
@@ -29,14 +32,24 @@ export default function RegisterGreetingScreen() {
           </Text>
         </Pressable>
 
-        <Pressable style={[styles.btn, styles.btnBlack]}>
+        <Pressable
+          style={({pressed}) => [
+            styles.btn,
+            styles.btnBlack,
+            pressed && {opacity: 0.7},
+          ]}>
           <Ionicons name="logo-apple" size={18} color="#fff" />
           <Text style={[styles.btnText, styles.btnTextLight]}>
             Войти через Apple
           </Text>
         </Pressable>
 
-        <Pressable style={[styles.btn, styles.btnWhite]}>
+        <Pressable
+          style={({pressed}) => [
+            styles.btn,
+            styles.btnWhite,
+            pressed && {opacity: 0.7},
+          ]}>
           <Ionicons name="logo-google" size={18} color="#2C2C2A" />
           <Text style={[styles.btnText, styles.btnTextDark]}>
             Войти через Google
@@ -45,7 +58,9 @@ export default function RegisterGreetingScreen() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Уже есть аккаунт? </Text>
-          <Pressable onPress={() => router.push("/(auth)/login-greeting")}>
+          <Pressable
+            onPress={() => router.push("/(auth)/login-greeting")}
+            style={({pressed}) => pressed && {opacity: 0.7}}>
             <Text style={styles.footerLink}>Войти</Text>
           </Pressable>
         </View>
@@ -86,17 +101,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: "#FFFFFF",
   },
-  appIconDot: {
-    position: "absolute",
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#1D9E75",
-    borderWidth: 4,
-    borderColor: "#D85A30",
-    right: 22,
-    bottom: 22,
-  },
   titleGroup: {
     alignItems: "center",
     gap: 12,
@@ -114,6 +118,8 @@ const styles = StyleSheet.create({
     color: "#2C2C2A",
     textAlign: "center",
     lineHeight: 28,
+    minHeight: 56,
+    textAlignVertical: "center",
   },
   bottom: {
     gap: 10,

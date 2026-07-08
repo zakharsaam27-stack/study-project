@@ -1,5 +1,6 @@
 // TO DO: REDIRECT TO MY-STATUS AND FRIENDS,
 
+import {Avatar} from "@/components/Avatar";
 import {useAuth} from "@/contexts/auth.context";
 import {
   database_id,
@@ -8,19 +9,17 @@ import {
   tablesDB,
 } from "@/lib/appwrite";
 import {Ionicons} from "@expo/vector-icons";
-import {useFocusEffect} from "expo-router";
+import {useFocusEffect, useRouter} from "expo-router";
 import {useCallback, useState} from "react";
 import {Pressable, StyleSheet, Text, View} from "react-native";
 import {Models, Query} from "react-native-appwrite";
 import {SafeAreaView} from "react-native-safe-area-context";
 
-const getInitials = (name: string) =>
-  name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
-
 export default function ProfileScreen() {
   const {user, logOut} = useAuth();
   const [myProfile, setMyprofile] = useState<Models.DefaultRow | null>(null);
   const [friendCount, setFriendCount] = useState<number>(0);
+  const router = useRouter()
 
   const fetchMyProfile = async () => {
     if (!user) return;
@@ -69,18 +68,20 @@ export default function ProfileScreen() {
 
       <View style={styles.profileSection}>
         <View style={styles.avatarWrapper}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarInitials}>
-              {getInitials(myProfile.name as string)}
-            </Text>
-          </View>
-          <View style={styles.statusDot} />
+          <Avatar
+            source={myProfile.avatarURL ? {uri: myProfile.avatarURL} : null}
+            name={myProfile.name}
+            size={124}
+          />
         </View>
         <Text style={styles.name}>{myProfile.name}</Text>
         <Text style={styles.nickname}>@{myProfile.nickname}</Text>
       </View>
 
-      <Pressable style={styles.editButton}>
+      <Pressable
+        style={({pressed}) => [styles.editButton, pressed && {opacity: 0.7}]}
+        onPress={() => router.push('/(app)/profile/edit-profile')}
+      >
         <Ionicons name="create-outline" size={18} color="#fff" />
         <Text style={styles.editButtonText}>Редактировать профиль</Text>
       </Pressable>
@@ -100,14 +101,16 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <View style={styles.card}>
+      <View style={[styles.card, styles.settingsCard]}>
         {settingsRows.map((row, index) => (
-          <View
+          <Pressable
             key={row.label}
-            style={[
+            style={({pressed}) => [
               styles.settingsRow,
               index === settingsRows.length - 1 && styles.lastRow,
-            ]}>
+              pressed && styles.settingsRowPressed,
+            ]}
+          >
             <Ionicons name={row.icon} size={20} color="#5F5E5A" />
             <Text style={styles.settingsLabel}>{row.label}</Text>
             <View style={styles.settingsRight}>
@@ -116,11 +119,14 @@ export default function ProfileScreen() {
               )}
               <Ionicons name="chevron-forward" size={16} color="#C2BFB3" />
             </View>
-          </View>
+          </Pressable>
         ))}
       </View>
 
-      <Pressable style={styles.logoutButton} onPress={logOut}>
+      <Pressable
+        style={({pressed}) => [styles.logoutButton, pressed && {opacity: 0.7}]}
+        onPress={logOut}
+      >
         <Ionicons name="exit-outline" size={18} color="#C0392B" />
         <Text style={styles.logoutText}>Выйти из аккаунта</Text>
       </Pressable>
@@ -166,17 +172,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#712B13",
   },
-  statusDot: {
-    position: "absolute",
-    bottom: 3,
-    right: 3,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: "#1D9E75",
-    borderWidth: 3,
-    borderColor: "#F1EFE8",
-  },
   name: {
     fontSize: 20,
     fontWeight: "600",
@@ -210,6 +205,9 @@ const styles = StyleSheet.create({
     borderColor: "#D3D1C7",
     borderRadius: 14,
     padding: 14,
+  },
+  settingsCard: {
+    paddingVertical: 0,
   },
   statusFriendRow: {
     flexDirection: "row",
@@ -258,6 +256,9 @@ const styles = StyleSheet.create({
   },
   lastRow: {
     borderBottomWidth: 0,
+  },
+  settingsRowPressed: {
+    backgroundColor: "#F1EFE8",
   },
   settingsLabel: {
     flex: 1,

@@ -31,6 +31,13 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Приложению нужен доступ к галерее, чтобы вы могли выбрать фото профиля.",
+          "cameraPermission": "Приложению нужен доступ к камере, чтобы вы могли сделать фото профиля."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
@@ -38,6 +45,13 @@
             "image": "./assets/images/splash-icon.png",
             "imageWidth": 76
           }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ffffff"
         }
       ]
     ],

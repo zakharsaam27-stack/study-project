@@ -1,3 +1,4 @@
+import {Avatar} from "@/components/Avatar";
 import {useAuth} from "@/contexts/auth.context";
 import {
   accept_friend_function_id,
@@ -20,7 +21,7 @@ export default function RequestsScreen() {
   const [requestersProfiles, setRequestersProfiles] = useState<
     Models.DefaultRow[]
   >([]);
-  const [error, setError] = useState('')
+  const [error, setError] = useState("");
   const {user} = useAuth();
   const router = useRouter();
 
@@ -30,7 +31,7 @@ export default function RequestsScreen() {
     }, []),
   );
 
-  if (!user) return null
+  if (!user) return null;
 
   const fetchRequests = async () => {
     const fetchRequestsResult = await tablesDB.listRows({
@@ -43,7 +44,7 @@ export default function RequestsScreen() {
     });
     setRequests(fetchRequestsResult.rows);
 
-    await fetchRequestersProfiles(fetchRequestsResult.rows)
+    await fetchRequestersProfiles(fetchRequestsResult.rows);
   };
 
   const handleAcceptRequest = async (
@@ -51,50 +52,50 @@ export default function RequestsScreen() {
     requesterId: string,
     addresseeId: string,
   ) => {
-    
-    const removedRequest = requests.find((r) => r.$id === rowId)
+    const removedRequest = requests.find((r) => r.$id === rowId);
     setRequests((prev) => prev.filter((r) => r.$id !== rowId));
-    
-    const checkAcc = await tablesDB.listRows({
-        databaseId: database_id,
-        tableId: friendship_table_id,
-        queries: [
-          Query.equal('requesterId', user.$id),
-          Query.equal('addresseeId', requesterId),
-          Query.equal('status', 'accepted')
-        ]
-      });
-      
-      if (checkAcc.total > 0) {
-        return
-      }
 
-    
+    const checkAcc = await tablesDB.listRows({
+      databaseId: database_id,
+      tableId: friendship_table_id,
+      queries: [
+        Query.equal("requesterId", user.$id),
+        Query.equal("addresseeId", requesterId),
+        Query.equal("status", "accepted"),
+      ],
+    });
+
+    if (checkAcc.total > 0) {
+      return;
+    }
+
     try {
-    await functions.createExecution(
-      accept_friend_function_id,
-      JSON.stringify({rowId, requesterId, addresseeId}),
-    )} catch (err) {
+      await functions.createExecution(
+        accept_friend_function_id,
+        JSON.stringify({rowId, requesterId, addresseeId}),
+      );
+    } catch (err) {
       if (removedRequest) {
-        setRequests((prev) => [...prev, removedRequest])
+        setRequests((prev) => [...prev, removedRequest]);
       }
-      setError('Что то пошло не так')
+      setError("Что то пошло не так");
     }
   };
 
   const handleRejectRequest = async (rowId: string) => {
-    const removedRequest = requests.find((r) => r.$id === rowId)
+    const removedRequest = requests.find((r) => r.$id === rowId);
     setRequests((prev) => prev.filter((r) => r.$id !== rowId));
     try {
-    await functions.createExecution(
-      reject_friend_function_id, JSON.stringify({rowId})
-    )} catch (err) {
+      await functions.createExecution(
+        reject_friend_function_id,
+        JSON.stringify({rowId}),
+      );
+    } catch (err) {
       if (removedRequest) {
-        setRequests((prev) => [...prev, removedRequest])
+        setRequests((prev) => [...prev, removedRequest]);
       }
-      setError('Что то пошло не так')
+      setError("Что то пошло не так");
     }
-
   };
 
   const fetchRequestersProfiles = async (rows: Models.DefaultRow[]) => {
@@ -117,7 +118,8 @@ export default function RequestsScreen() {
           <Ionicons name="chevron-back" size={26} color="#2C2C2A" />
         </Pressable>
         <Text style={styles.title}>
-          Входящие заявки <Text style={styles.titleCount}>{requests.length}</Text>
+          Входящие заявки{" "}
+          <Text style={styles.titleCount}>{requests.length}</Text>
         </Text>
       </View>
       {requests.length === 0 ? (
@@ -127,7 +129,8 @@ export default function RequestsScreen() {
           </View>
           <Text style={styles.emptyTitle}>Нет входящих заявок</Text>
           <Text style={styles.emptySubtitle}>
-            Заявки в друзья будут появляться здесь. Поделись ссылкой, чтобы тебя нашли.
+            Заявки в друзья будут появляться здесь. Поделись ссылкой, чтобы тебя
+            нашли.
           </Text>
           <Pressable style={styles.shareButton}>
             <Ionicons name="share-social-outline" size={17} color="#2C2C2A" />
@@ -135,63 +138,62 @@ export default function RequestsScreen() {
           </Pressable>
         </View>
       ) : (
-      <View style={styles.list}>
-        {requests.map((request) => {
-          const profile = requestersProfiles.find(
-            (p) => p.$id === request.requesterId,
-          );
-          if (!profile) return null;
-          return (
-            <View key={request.requesterId} style={styles.card}>
-              <View style={styles.cardTop}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {(profile.name as string)
-                      .split(" ")
-                      .map((w) => w[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase()}
-                  </Text>
+        <View style={styles.list}>
+          {requests.map((request) => {
+            const profile = requestersProfiles.find(
+              (p) => p.$id === request.requesterId,
+            );
+            if (!profile) return null;
+            return (
+              <View key={request.requesterId} style={styles.card}>
+                <View style={styles.cardTop}>
+                  <View style={styles.avatar}>
+                    <Avatar
+                      source={
+                        profile.avatarURL ? {uri: profile.avatarURL} : null
+                      }
+                      name={profile.name}
+                      size={48}
+                    />
+                  </View>
+                  <View style={styles.info}>
+                    <Text style={styles.name}>{profile.name as string}</Text>
+                    <Text style={styles.nickname}>
+                      @{profile.nickname as string}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.info}>
-                  <Text style={styles.name}>{profile.name as string}</Text>
-                  <Text style={styles.nickname}>
-                    @{profile.nickname as string}
-                  </Text>
+                <View style={styles.actions}>
+                  <Pressable
+                    style={({pressed}) => [
+                      styles.acceptBtn,
+                      pressed && {opacity: 0.7},
+                    ]}
+                    onPress={() =>
+                      handleAcceptRequest(
+                        request.$id,
+                        request.requesterId,
+                        user.$id,
+                      )
+                    }
+                  >
+                    <Ionicons name="checkmark" size={16} color="#fff" />
+                    <Text style={styles.acceptBtnText}>Принять</Text>
+                  </Pressable>
+                  <Pressable
+                    style={({pressed}) => [
+                      styles.rejectBtn,
+                      pressed && {opacity: 0.7},
+                    ]}
+                    onPress={() => handleRejectRequest(request.$id)}
+                  >
+                    <Text style={styles.rejectBtnText}>Отклонить</Text>
+                  </Pressable>
                 </View>
               </View>
-              <View style={styles.actions}>
-                <Pressable
-                  style={({pressed}) => [
-                    styles.acceptBtn,
-                    pressed && {opacity: 0.7},
-                  ]}
-                  onPress={() =>
-                    handleAcceptRequest(
-                      request.$id,
-                      request.requesterId,
-                      user.$id,
-                    )
-                  }
-                >
-                  <Ionicons name="checkmark" size={16} color="#fff" />
-                  <Text style={styles.acceptBtnText}>Принять</Text>
-                </Pressable>
-                <Pressable
-                  style={({pressed}) => [
-                    styles.rejectBtn,
-                    pressed && {opacity: 0.7},
-                  ]}
-                  onPress={() => handleRejectRequest(request.$id)}
-                >
-                  <Text style={styles.rejectBtnText}>Отклонить</Text>
-                </Pressable>
-              </View>
-            </View>
-          );
-        })}
-      </View>
+            );
+          })}
+        </View>
       )}
     </SafeAreaView>
   );
@@ -207,7 +209,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backBtn: {padding: 2},
-  title: {fontSize: 22, fontWeight: "600", letterSpacing: -0.3, color: "#2C2C2A"},
+  title: {
+    fontSize: 22,
+    fontWeight: "600",
+    letterSpacing: -0.3,
+    color: "#2C2C2A",
+  },
   titleCount: {color: "#888780", fontWeight: "600"},
   list: {paddingHorizontal: 16, marginTop: 10, gap: 14},
   card: {

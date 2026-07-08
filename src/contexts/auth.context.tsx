@@ -64,14 +64,23 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
       password,
       name,
     });
-    await login(email, password);
 
-    let uploadedFile
+    await account.createEmailPasswordSession(email, password);
+    const loggedInUser = await account.get();
+
+    const avatarFileId = ID.unique();
+
+    let uploadedFile;
     if (avatarAsset !== null) {
       uploadedFile = await storage.createFile({
         bucketId: avatars_bucket_id,
-        fileId: ID.unique(),
-        file: {name: avatarAsset.fileName, type: avatarAsset.mimeType, size: avatarAsset.fileSize, uri: avatarAsset.uri},
+        fileId: avatarFileId,
+        file: {
+          name: avatarAsset.fileName,
+          type: avatarAsset.mimeType,
+          size: avatarAsset.fileSize,
+          uri: avatarAsset.uri,
+        },
         permissions: [
           Permission.update(Role.user(newUser.$id)),
           Permission.delete(Role.user(newUser.$id)),
@@ -79,9 +88,11 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
       });
     }
 
-    let avatarURL
+    let avatarURL;
     if (uploadedFile) {
-      avatarURL = storage.getFileViewURL(avatars_bucket_id, uploadedFile.$id).toString()
+      avatarURL = storage
+        .getFileViewURL(avatars_bucket_id, uploadedFile.$id)
+        .toString();
     }
 
     await tablesDB.createRow({
@@ -95,12 +106,16 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
         statusEmoji: "🤔",
         statusText: "Неизвестно",
         statusUpdatedAt: new Date().toISOString(),
+        avatarFileId: avatarFileId,
+        busyness: 'busy'
       },
       permissions: [
         Permission.update(Role.user(newUser.$id)),
         Permission.delete(Role.user(newUser.$id)),
       ],
     });
+
+    setUser(loggedInUser);
   };
   const logOut = async () => {
     await account.deleteSession({sessionId: "current"});

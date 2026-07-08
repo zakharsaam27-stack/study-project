@@ -29,6 +29,11 @@ export default function ThirdStepScreen() {
   };
 
   const handlePickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permission.status !== "granted") {
+      setError("Что то пошло не так при выборе фото");
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.8,
@@ -45,19 +50,24 @@ export default function ThirdStepScreen() {
   };
 
   const handleTakePicture = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (permission.status !== "granted") {
+      setError("Что то пошло не так при выборе фото");
+      return;
+    }
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.8,
     });
-      if (!result.canceled){
-        const asset = result.assets[0]
-        setAvatarAsset({
-          uri: asset.uri,
-          fileName: asset.fileName ?? `avatar-${Date.now()}.jpg`,
-          mimeType: asset.mimeType ?? "image/jpg",
-          fileSize: asset.fileSize ?? 0,
-        })
-      }
+    if (!result.canceled) {
+      const asset = result.assets[0];
+      setAvatarAsset({
+        uri: asset.uri,
+        fileName: asset.fileName ?? `avatar-${Date.now()}.jpg`,
+        mimeType: asset.mimeType ?? "image/jpg",
+        fileSize: asset.fileSize ?? 0,
+      });
+    }
   };
 
   return (
@@ -87,10 +97,20 @@ export default function ThirdStepScreen() {
         </View>
 
         <View style={styles.pickerBtns}>
-          <Pressable style={styles.btnOutlineCoral} onPress={handlePickImage}>
+          <Pressable
+            style={({pressed}) => [
+              styles.btnOutlineCoral,
+              pressed && {opacity: 0.7},
+            ]}
+            onPress={handlePickImage}>
             <Text style={styles.btnOutlineCoralText}>Выбрать из галереи</Text>
           </Pressable>
-          <Pressable style={styles.btnOutlineGray} onPress={handleTakePicture}>
+          <Pressable
+            style={({pressed}) => [
+              styles.btnOutlineGray,
+              pressed && {opacity: 0.7},
+            ]}
+            onPress={handleTakePicture}>
             <Text style={styles.btnOutlineGrayText}>Сделать фото</Text>
           </Pressable>
         </View>
@@ -101,13 +121,18 @@ export default function ThirdStepScreen() {
 
         <View style={styles.bottomBtns}>
           <Pressable
-            style={[styles.btnCoral, isContinuing && styles.btnDisabled]}
+            style={({pressed}) => [
+              styles.btnCoral,
+              isContinuing && styles.btnDisabled,
+              pressed && {opacity: 0.7},
+            ]}
             disabled={isContinuing || isSkipping}
             onPress={() => handleRegister(setIsContinuing)}
           >
             <Text style={styles.btnCoralText}>Продолжить</Text>
           </Pressable>
           <Pressable
+            style={({pressed}) => pressed && {opacity: 0.7}}
             disabled={isContinuing || isSkipping}
             onPress={() => handleRegister(setIsSkipping)}
           >

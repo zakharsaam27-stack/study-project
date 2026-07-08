@@ -1,4 +1,3 @@
-import {useReg} from "@/contexts/reg.context";
 import {useState} from "react";
 import {Image, ImageSourcePropType, StyleSheet, Text, View} from "react-native";
 
