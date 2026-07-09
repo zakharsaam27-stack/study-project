@@ -11,6 +11,7 @@ export default function RegisterGreetingScreen() {
       <View style={styles.center}>
         <View style={styles.appIcon}>
           <View style={styles.appIconCircle} />
+          <View style={styles.appIconDot} />
         </View>
         <View style={styles.titleGroup}>
           <Text style={styles.appName}>PingMe</Text>
@@ -100,6 +101,17 @@ const styles = StyleSheet.create({
     height: 42,
     borderRadius: 999,
     backgroundColor: "#FFFFFF",
+  },
+  appIconDot: {
+    position: "absolute",
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#1D9E75",
+    borderWidth: 4,
+    borderColor: "#D85A30",
+    right: 22,
+    bottom: 22,
   },
   titleGroup: {
     alignItems: "center",

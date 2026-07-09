@@ -269,6 +269,7 @@ export default function ProfileEditScreen() {
           <Text style={styles.fieldLabel}>ИМЯ</Text>
           <View style={styles.inputBox}>
             <TextInput
+              autoCapitalize="none"
               style={styles.input}
               value={newName}
               onChangeText={setNewName}
@@ -284,6 +285,7 @@ export default function ProfileEditScreen() {
           <View style={styles.inputBox}>
             <Text style={styles.nicknameDog}>@</Text>
             <TextInput
+              autoCapitalize="none"
               style={[styles.input]}
               value={newNickName}
               onChangeText={setNewNickName}

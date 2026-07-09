@@ -282,6 +282,7 @@ export default function MyStatusScreen() {
         </KeyboardAvoidingView>
       )}
       <EmojiPicker
+        categoryPosition="bottom"
         open={isEmojiPickerOpen}
         onClose={() => setIsEmojiPickerOpen(false)}
         onEmojiSelected={(emojiObject) =>
