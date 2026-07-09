@@ -14,7 +14,7 @@ import {
   View,
 } from "react-native";
 import {SafeAreaView, useSafeAreaInsets} from "react-native-safe-area-context";
-import EmojiPicker from "rn-emoji-keyboard";
+import {EmojiKeyboard} from "rn-emoji-keyboard";
 import Animated, {
   FadeIn,
   FadeOut,
@@ -186,10 +186,7 @@ export default function MyStatusScreen() {
       </View>
 
       {isCustomOpen && (
-        <KeyboardAvoidingView
-          style={styles.modalBackdrop}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
+        <View style={styles.modalBackdrop}>
           <Animated.View
             entering={FadeIn}
             exiting={FadeOut}
@@ -201,94 +198,103 @@ export default function MyStatusScreen() {
             />
           </Animated.View>
 
-          <Animated.View
-            entering={SlideInDown}
-            exiting={SlideOutDown}
-            style={[styles.sheet, {paddingBottom: insets.bottom + 20}]}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            keyboardVerticalOffset={-insets.top - 33}
           >
-            <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Свой статус</Text>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>ЭМОДЗИ</Text>
-              <View style={styles.emojiRow}>
-                <Pressable
-                  style={styles.emojiBox}
-                  onPress={() => setIsEmojiPickerOpen(true)}
-                >
-                  <Text style={styles.emojiBoxText}>{customStatusEmoji}</Text>
-                </Pressable>
-                <Text style={styles.emojiHint}>
-                  Нажми, чтобы выбрать эмодзи
-                </Text>
-              </View>
-            </View>
-
-            <View style={[styles.fieldGroup, styles.descriptionGroup]}>
-              <Text style={styles.fieldLabel}>ОПИСАНИЕ</Text>
-              <View
-                style={[
-                  styles.inputRing,
-                  isDescFocused && styles.inputRingFocused,
-                ]}
-              >
-                <View
-                  style={[
-                    styles.inputRow,
-                    isDescFocused && styles.inputRowFocused,
-                  ]}
-                >
-                  <TextInput
-                    style={styles.input}
-                    value={customStatusText}
-                    onChangeText={setCustomStatusText}
-                    placeholder="Свой статус"
-                    placeholderTextColor="#888780"
-                    maxLength={30}
-                    onFocus={() => setIsDescFocused(true)}
-                    onBlur={() => setIsDescFocused(false)}
+            <Animated.View
+              entering={SlideInDown}
+              exiting={SlideOutDown}
+              style={[styles.sheet, {paddingBottom: insets.bottom + 20}]}
+            >
+              {isEmojiPickerOpen && (
+                <View style={styles.emojiOverlay}>
+                  <EmojiKeyboard
+                    categoryPosition="bottom"
+                    onEmojiSelected={(emojiObject) => {
+                      setCustomStatusEmoji(emojiObject.emoji);
+                      setIsEmojiPickerOpen(false);
+                    }}
                   />
-                  <Text style={styles.charCounter}>
-                    {customStatusText.length}/30
+                </View>
+              )}
+
+              <View style={styles.sheetHandle} />
+              <Text style={styles.sheetTitle}>Свой статус</Text>
+
+              <View style={[styles.fieldGroup, {zIndex: 2}]}>
+                <Text style={styles.fieldLabel}>ЭМОДЗИ</Text>
+                <View style={styles.emojiRow}>
+                  <Pressable
+                    style={styles.emojiBox}
+                    onPress={() => setIsEmojiPickerOpen(true)}
+                  >
+                    <Text style={styles.emojiBoxText}>{customStatusEmoji}</Text>
+                  </Pressable>
+                  <Text style={styles.emojiHint}>
+                    Нажми, чтобы выбрать эмодзи
                   </Text>
                 </View>
               </View>
-            </View>
 
-            <View style={styles.sheetButtons}>
-              <Pressable
-                style={({pressed}) => [
-                  styles.saveButton,
-                  pressed && {opacity: 0.85},
-                ]}
-                onPress={() => {
-                  handleChangeStatus(customStatusEmoji, customStatusText);
-                  setIsCustomOpen(false);
-                }}
-              >
-                <Text style={styles.saveButtonText}>Сохранить</Text>
-              </Pressable>
-              <Pressable
-                style={({pressed}) => [
-                  styles.cancelButton,
-                  pressed && {opacity: 0.7},
-                ]}
-                onPress={() => setIsCustomOpen(false)}
-              >
-                <Text style={styles.cancelButtonText}>Отмена</Text>
-              </Pressable>
-            </View>
-          </Animated.View>
-        </KeyboardAvoidingView>
+              <View style={[styles.fieldGroup, styles.descriptionGroup]}>
+                <Text style={styles.fieldLabel}>ОПИСАНИЕ</Text>
+                <View
+                  style={[
+                    styles.inputRing,
+                    isDescFocused && styles.inputRingFocused,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.inputRow,
+                      isDescFocused && styles.inputRowFocused,
+                    ]}
+                  >
+                    <TextInput
+                      style={styles.input}
+                      value={customStatusText}
+                      onChangeText={setCustomStatusText}
+                      placeholder="Свой статус"
+                      placeholderTextColor="#888780"
+                      maxLength={30}
+                      onFocus={() => setIsDescFocused(true)}
+                      onBlur={() => setIsDescFocused(false)}
+                    />
+                    <Text style={styles.charCounter}>
+                      {customStatusText.length}/30
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.sheetButtons}>
+                <Pressable
+                  style={({pressed}) => [
+                    styles.saveButton,
+                    pressed && {opacity: 0.85},
+                  ]}
+                  onPress={() => {
+                    handleChangeStatus(customStatusEmoji, customStatusText);
+                    setIsCustomOpen(false);
+                  }}
+                >
+                  <Text style={styles.saveButtonText}>Сохранить</Text>
+                </Pressable>
+                <Pressable
+                  style={({pressed}) => [
+                    styles.cancelButton,
+                    pressed && {opacity: 0.7},
+                  ]}
+                  onPress={() => setIsCustomOpen(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Отмена</Text>
+                </Pressable>
+              </View>
+            </Animated.View>
+          </KeyboardAvoidingView>
+        </View>
       )}
-      <EmojiPicker
-        categoryPosition="bottom"
-        open={isEmojiPickerOpen}
-        onClose={() => setIsEmojiPickerOpen(false)}
-        onEmojiSelected={(emojiObject) =>
-          setCustomStatusEmoji(emojiObject.emoji)
-        }
-      />
     </SafeAreaView>
   );
 }
@@ -521,4 +527,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#888780",
   },
+  emojiOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+    backgroundColor: '#ffffff'
+  }
 });
