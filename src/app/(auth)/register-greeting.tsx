@@ -60,7 +60,7 @@ export default function RegisterGreetingScreen() {
         <View style={styles.footer}>
           <Text style={styles.footerText}>Уже есть аккаунт? </Text>
           <Pressable
-            onPress={() => router.push("/(auth)/login-greeting")}
+            onPress={() => router.replace("/(auth)/login-greeting")}
             style={({pressed}) => pressed && {opacity: 0.7}}>
             <Text style={styles.footerLink}>Войти</Text>
           </Pressable>

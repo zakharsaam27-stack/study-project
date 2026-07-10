@@ -1,20 +1,23 @@
-import { AuthProvider, useAuth } from "@/contexts/auth.context";
-import { Stack } from "expo-router";
-import { useColorScheme } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+import {AuthProvider, useAuth} from "@/contexts/auth.context";
+import {HideTabBarProvider} from "@/contexts/tabbar.context";
+import {Stack} from "expo-router";
+import {useColorScheme} from "react-native";
+import {GestureHandlerRootView} from "react-native-gesture-handler";
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <RootNavigator />
-      </AuthProvider>
+    <GestureHandlerRootView style={{flex: 1}}>
+      <HideTabBarProvider>
+        <AuthProvider>
+          <RootNavigator />
+        </AuthProvider>
+      </HideTabBarProvider>
     </GestureHandlerRootView>
   );
 }
 
 function RootNavigator() {
-  const { user, isLoading } = useAuth();
+  const {user, isLoading} = useAuth();
   const colorScheme = useColorScheme();
 
   if (isLoading) {
@@ -24,10 +27,10 @@ function RootNavigator() {
   return (
     <Stack>
       <Stack.Protected guard={!user}>
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{headerShown: false}} />
       </Stack.Protected>
       <Stack.Protected guard={!!user}>
-        <Stack.Screen name="(app)" options={{ headerShown: false }} />
+        <Stack.Screen name="(app)" options={{headerShown: false}} />
       </Stack.Protected>
     </Stack>
   );

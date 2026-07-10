@@ -8,14 +8,8 @@ import {
 import {Ionicons} from "@expo/vector-icons";
 import {useRouter} from "expo-router";
 import {useEffect, useState} from "react";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import {ID, Query } from "react-native-appwrite";
+import {Pressable, StyleSheet, Text, TextInput, View} from "react-native";
+import {ID, Query} from "react-native-appwrite";
 import {SafeAreaView} from "react-native-safe-area-context";
 
 export default function AddFriendScreen() {
@@ -46,20 +40,20 @@ export default function AddFriendScreen() {
         setError("Вы не можете добавить себя в друзья");
         return;
       }
-      
+
       const checkReq = await tablesDB.listRows({
         databaseId: database_id,
         tableId: friendship_table_id,
         queries: [
-          Query.equal('requesterId', user.$id),
-          Query.equal('addresseeId', searchResult.rows[0].$id)
-        ]
+          Query.equal("requesterId", user.$id),
+          Query.equal("addresseeId", searchResult.rows[0].$id),
+        ],
       });
-      
+
       if (checkReq.total > 0) {
-        setError("Заявка уже отправлена")
-        setRequestSent(false)
-        return
+        setError("Заявка уже отправлена");
+        setRequestSent(false);
+        return;
       }
 
       tablesDB.createRow({
@@ -121,16 +115,26 @@ export default function AddFriendScreen() {
       </View>
       <View style={styles.section}>
         <Pressable
-          style={({pressed}) => [styles.secondaryButton, pressed && {opacity: 0.7}]}
+          style={({pressed}) => [
+            styles.secondaryButton,
+            pressed && {opacity: 0.7},
+          ]}
         >
           <Ionicons name="copy-outline" size={18} color="#2C2C2A" />
-          <Text style={styles.secondaryButtonText}>Скопировать ссылку (Coming soon)</Text>
+          <Text style={styles.secondaryButtonText}>
+            Скопировать ссылку (Coming soon)
+          </Text>
         </Pressable>
         <Pressable
-          style={({pressed}) => [styles.secondaryButton, pressed && {opacity: 0.7}]}
+          style={({pressed}) => [
+            styles.secondaryButton,
+            pressed && {opacity: 0.7},
+          ]}
         >
           <Ionicons name="share-social-outline" size={18} color="#2C2C2A" />
-          <Text style={styles.secondaryButtonText}>Поделиться ссылкой (Coming soon)</Text>
+          <Text style={styles.secondaryButtonText}>
+            Поделиться ссылкой (Coming soon)
+          </Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -147,7 +151,12 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   backBtn: {padding: 2},
-  title: {fontSize: 22, fontWeight: "600", letterSpacing: -0.3, color: "#2C2C2A"},
+  title: {
+    fontSize: 22,
+    fontWeight: "600",
+    letterSpacing: -0.3,
+    color: "#2C2C2A",
+  },
   label: {
     marginHorizontal: 16,
     marginBottom: 8,

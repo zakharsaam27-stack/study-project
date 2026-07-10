@@ -1,11 +1,12 @@
-// TO DO: CUSTOM STATUS, PLURAL ACCORDING TO GENDER
+// PLURAL ACCORDING TO GENDER, SLIDING ANIM
 
 import {useAuth} from "@/contexts/auth.context";
 import {database_id, profiles_table_id, tablesDB} from "@/lib/appwrite";
 import {useFocusEffect} from "expo-router";
-import {useCallback, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -21,14 +22,23 @@ import Animated, {
   SlideInDown,
   SlideOutDown,
 } from "react-native-reanimated";
+import {useHideTabBar} from "@/contexts/tabbar.context";
+
+type StatusPreset = {
+  statusEmoji: string;
+  statusText: string;
+  statusBusyness: "free" | "busy";
+};
 
 export default function MyStatusScreen() {
   const {user} = useAuth();
+  const {setIsTabBarHidden} = useHideTabBar();
   const [statusEmoji, setStatusEmoji] = useState("🤔");
   const [statusText, setStatusText] = useState("Неизвестно");
   const [customStatusEmoji, setCustomStatusEmoji] = useState("✏️");
   const [customStatusText, setCustomStatusText] = useState("");
   const [statusUpdatedAt, setStatusUpdatedAt] = useState("");
+  const [statusBusyness, setStatusBusyness] = useState<"busy" | "free">("busy");
   const [isCustomOpen, setIsCustomOpen] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [isDescFocused, setIsDescFocused] = useState(false);
@@ -57,17 +67,30 @@ export default function MyStatusScreen() {
     }, []),
   );
 
+  useEffect(() => {
+    if (isCustomOpen) {
+      setIsTabBarHidden(true);
+    } else {
+      setIsTabBarHidden(false);
+      setIsEmojiPickerOpen(false);
+    }
+  }, [isCustomOpen]);
+
   if (!user) {
     return null;
   }
 
-  const handleChangeStatus = async (emoji: string, text: string) => {
+  const handleChangeStatus = async (
+    emoji: string,
+    text: string,
+    busyness: "free" | "busy",
+  ) => {
     try {
       const now = new Date().toISOString();
-
       setStatusEmoji(emoji);
       setStatusText(text);
       setStatusUpdatedAt(now);
+      setStatusBusyness(busyness);
       await tablesDB.updateRow({
         databaseId: database_id,
         tableId: profiles_table_id,
@@ -76,6 +99,7 @@ export default function MyStatusScreen() {
           statusEmoji: emoji,
           statusText: text,
           statusUpdatedAt: now,
+          busyness: busyness,
         },
       });
     } catch (err) {
@@ -104,31 +128,31 @@ export default function MyStatusScreen() {
     }
   };
 
-  const presets = [
+  const presets: StatusPreset[] = [
     {
       statusEmoji: "😊",
       statusText: "Свободен",
-      busyness: "free",
+      statusBusyness: "free",
     },
     {
       statusEmoji: "💼",
       statusText: "Работаю",
-      busyness: "busy",
+      statusBusyness: "busy" as const,
     },
     {
       statusEmoji: "😴",
       statusText: "Сплю",
-      busyness: "busy",
+      statusBusyness: "busy" as const,
     },
     {
       statusEmoji: "🎮",
       statusText: "Играю",
-      busyness: "busy",
+      statusBusyness: "busy" as const,
     },
     {
       statusEmoji: "🤫",
       statusText: "Не беспокоить",
-      busyness: "busy",
+      statusBusyness: "busy" as const,
     },
   ];
 
@@ -164,7 +188,11 @@ export default function MyStatusScreen() {
                 pressed && {opacity: 0.7},
               ]}
               onPress={() =>
-                handleChangeStatus(preset.statusEmoji, preset.statusText)
+                handleChangeStatus(
+                  preset.statusEmoji,
+                  preset.statusText,
+                  preset.statusBusyness,
+                )
               }
             >
               <Text style={styles.emoji}>{preset.statusEmoji}</Text>
@@ -186,114 +214,205 @@ export default function MyStatusScreen() {
       </View>
 
       {isCustomOpen && (
-        <View style={styles.modalBackdrop}>
-          <Animated.View
-            entering={FadeIn}
-            exiting={FadeOut}
-            style={styles.backdropOverlay}
-          >
-            <Pressable
-              style={StyleSheet.absoluteFill}
-              onPress={() => setIsCustomOpen(false)}
-            />
-          </Animated.View>
-
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-            keyboardVerticalOffset={-insets.top - 33}
-          >
+        <Modal transparent={true}>
+          <View style={{flex: 1, justifyContent: "flex-end"}}>
             <Animated.View
-              entering={SlideInDown}
-              exiting={SlideOutDown}
-              style={[styles.sheet, {paddingBottom: insets.bottom + 20}]}
+              entering={FadeIn}
+              exiting={FadeOut}
+              style={styles.backdropOverlay}
             >
-              {isEmojiPickerOpen && (
-                <View style={styles.emojiOverlay}>
-                  <EmojiKeyboard
-                    categoryPosition="bottom"
-                    onEmojiSelected={(emojiObject) => {
-                      setCustomStatusEmoji(emojiObject.emoji);
-                      setIsEmojiPickerOpen(false);
-                    }}
-                  />
-                </View>
-              )}
+              <Pressable
+                style={StyleSheet.absoluteFill}
+                onPress={() => setIsCustomOpen(false)}
+              />
+            </Animated.View>
 
-              <View style={styles.sheetHandle} />
-              <Text style={styles.sheetTitle}>Свой статус</Text>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : undefined}
+              keyboardVerticalOffset={-insets.top - 33}
+            >
+              <Animated.View
+                entering={SlideInDown}
+                exiting={SlideOutDown}
+                style={[styles.sheet, {paddingBottom: insets.bottom + 20}]}
+              >
+                <View style={styles.sheetHandle} />
+                <Text style={styles.sheetTitle}>Свой статус</Text>
 
-              <View style={[styles.fieldGroup, {zIndex: 2}]}>
-                <Text style={styles.fieldLabel}>ЭМОДЗИ</Text>
-                <View style={styles.emojiRow}>
-                  <Pressable
-                    style={styles.emojiBox}
-                    onPress={() => setIsEmojiPickerOpen(true)}
-                  >
-                    <Text style={styles.emojiBoxText}>{customStatusEmoji}</Text>
-                  </Pressable>
-                  <Text style={styles.emojiHint}>
-                    Нажми, чтобы выбрать эмодзи
-                  </Text>
-                </View>
-              </View>
-
-              <View style={[styles.fieldGroup, styles.descriptionGroup]}>
-                <Text style={styles.fieldLabel}>ОПИСАНИЕ</Text>
-                <View
-                  style={[
-                    styles.inputRing,
-                    isDescFocused && styles.inputRingFocused,
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.inputRow,
-                      isDescFocused && styles.inputRowFocused,
-                    ]}
-                  >
-                    <TextInput
-                      style={styles.input}
-                      value={customStatusText}
-                      onChangeText={setCustomStatusText}
-                      placeholder="Свой статус"
-                      placeholderTextColor="#888780"
-                      maxLength={30}
-                      onFocus={() => setIsDescFocused(true)}
-                      onBlur={() => setIsDescFocused(false)}
-                    />
-                    <Text style={styles.charCounter}>
-                      {customStatusText.length}/30
-                    </Text>
+                <View style={[styles.fieldGroup, {zIndex: 2}]}>
+                  <Text style={styles.fieldLabel}>ЭМОДЗИ</Text>
+                  <View style={styles.emojiRow}>
+                    <Pressable
+                      style={({pressed}) => [
+                        styles.emojiBox,
+                        pressed && {opacity: 0.7},
+                      ]}
+                      onPress={() => {
+                        if (isEmojiPickerOpen === false) {
+                          setIsEmojiPickerOpen(true);
+                        } else {
+                          setIsEmojiPickerOpen(false);
+                        }
+                      }}
+                    >
+                      <Text style={styles.emojiBoxText}>
+                        {customStatusEmoji}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={({pressed}) => [pressed && {opacity: 0.7}]}
+                      onPress={() => {
+                        if (isEmojiPickerOpen === false) {
+                          setIsEmojiPickerOpen(true);
+                        } else {
+                          setIsEmojiPickerOpen(false);
+                        }
+                      }}
+                    >
+                      <Text style={styles.emojiHint}>
+                        Нажми, чтобы выбрать эмодзи
+                      </Text>
+                    </Pressable>
                   </View>
                 </View>
-              </View>
 
-              <View style={styles.sheetButtons}>
-                <Pressable
-                  style={({pressed}) => [
-                    styles.saveButton,
-                    pressed && {opacity: 0.85},
-                  ]}
-                  onPress={() => {
-                    handleChangeStatus(customStatusEmoji, customStatusText);
-                    setIsCustomOpen(false);
-                  }}
-                >
-                  <Text style={styles.saveButtonText}>Сохранить</Text>
-                </Pressable>
-                <Pressable
-                  style={({pressed}) => [
-                    styles.cancelButton,
-                    pressed && {opacity: 0.7},
-                  ]}
-                  onPress={() => setIsCustomOpen(false)}
-                >
-                  <Text style={styles.cancelButtonText}>Отмена</Text>
-                </Pressable>
-              </View>
-            </Animated.View>
-          </KeyboardAvoidingView>
-        </View>
+                {isEmojiPickerOpen ? (
+                  <Animated.View
+                    entering={SlideInDown}
+                    exiting={SlideOutDown}
+                    style={[
+                      styles.emojiOverlay,
+                      {marginBottom: -(insets.bottom + 20)},
+                    ]}
+                  >
+                    <EmojiKeyboard
+                      categoryPosition="bottom"
+                      onEmojiSelected={(emojiObject) => {
+                        setCustomStatusEmoji(emojiObject.emoji);
+                        setIsEmojiPickerOpen(false);
+                      }}
+                    />
+                  </Animated.View>
+                ) : (
+                  <>
+                    <View style={styles.fieldGroup}>
+                      <Text style={styles.fieldLabel}>СТАТУС</Text>
+                      <View style={styles.statusToggle}>
+                        <Pressable
+                          style={[
+                            styles.statusToggleOption,
+                            statusBusyness === "free" &&
+                              styles.statusToggleOptionSelected,
+                          ]}
+                          onPress={() => setStatusBusyness("free")}
+                        >
+                          <View
+                            style={[
+                              styles.statusToggleDot,
+                              styles.statusToggleDotFree,
+                            ]}
+                          />
+                          <Text
+                            style={[
+                              styles.statusToggleText,
+                              statusBusyness === "free" &&
+                                styles.statusToggleTextSelected,
+                            ]}
+                          >
+                            Свободен
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          style={[
+                            styles.statusToggleOption,
+                            statusBusyness === "busy" &&
+                              styles.statusToggleOptionSelected,
+                          ]}
+                          onPress={() => setStatusBusyness("busy")}
+                        >
+                          <View
+                            style={[
+                              styles.statusToggleDot,
+                              styles.statusToggleDotBusy,
+                            ]}
+                          />
+                          <Text
+                            style={[
+                              styles.statusToggleText,
+                              statusBusyness === "busy" &&
+                                styles.statusToggleTextSelected,
+                            ]}
+                          >
+                            Занят
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </View>
+
+                    <View style={[styles.fieldGroup, styles.descriptionGroup]}>
+                      <Text style={styles.fieldLabel}>ОПИСАНИЕ</Text>
+                      <View
+                        style={[
+                          styles.inputRing,
+                          isDescFocused && styles.inputRingFocused,
+                        ]}
+                      >
+                        <View
+                          style={[
+                            styles.inputRow,
+                            isDescFocused && styles.inputRowFocused,
+                          ]}
+                        >
+                          <TextInput
+                            style={styles.input}
+                            value={customStatusText}
+                            onChangeText={setCustomStatusText}
+                            placeholder="Введите текст"
+                            placeholderTextColor="#888780"
+                            maxLength={30}
+                            onFocus={() => setIsDescFocused(true)}
+                            onBlur={() => setIsDescFocused(false)}
+                          />
+                          <Text style={styles.charCounter}>
+                            {customStatusText.length}/30
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={styles.sheetButtons}>
+                      <Pressable
+                        style={({pressed}) => [
+                          styles.saveButton,
+                          pressed && {opacity: 0.85},
+                        ]}
+                        onPress={() => {
+                          handleChangeStatus(
+                            customStatusEmoji,
+                            customStatusText,
+                            statusBusyness,
+                          );
+                          setIsCustomOpen(false);
+                        }}
+                      >
+                        <Text style={styles.saveButtonText}>Сохранить</Text>
+                      </Pressable>
+                      <Pressable
+                        style={({pressed}) => [
+                          styles.cancelButton,
+                          pressed && {opacity: 0.7},
+                        ]}
+                        onPress={() => setIsCustomOpen(false)}
+                      >
+                        <Text style={styles.cancelButtonText}>Отмена</Text>
+                      </Pressable>
+                    </View>
+                  </>
+                )}
+              </Animated.View>
+            </KeyboardAvoidingView>
+          </View>
+        </Modal>
       )}
     </SafeAreaView>
   );
@@ -324,10 +443,10 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   currentStatusIcon: {
+    backgroundColor: "#FFE3D6",
     width: 56,
     height: 56,
     borderRadius: 999,
-    backgroundColor: "#E1F5EE",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -528,12 +647,52 @@ const styles = StyleSheet.create({
     color: "#888780",
   },
   emojiOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 1,
-    backgroundColor: '#ffffff'
-  }
+    height: 320,
+    backgroundColor: "#ffffff",
+    marginTop: 4,
+    marginHorizontal: -24,
+  },
+  statusToggle: {
+    flexDirection: "row",
+    padding: 3,
+    borderRadius: 11,
+    backgroundColor: "#EDEBE2",
+    gap: 3,
+  },
+  statusToggleOption: {
+    flex: 1,
+    height: 38,
+    borderRadius: 9,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+  },
+  statusToggleOptionSelected: {
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#281E14",
+    shadowOffset: {width: 0, height: 1.5},
+    shadowOpacity: 0.16,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statusToggleDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+  },
+  statusToggleDotFree: {
+    backgroundColor: "#7CC8A9",
+  },
+  statusToggleDotBusy: {
+    backgroundColor: "#D9776A",
+  },
+  statusToggleText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#5F5E5A",
+  },
+  statusToggleTextSelected: {
+    color: "#2C2C2A",
+  },
 });

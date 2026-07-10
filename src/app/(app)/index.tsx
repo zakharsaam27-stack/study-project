@@ -1,7 +1,7 @@
 // TO DO: FREE AND BUSY,
 
 import {Ionicons} from "@expo/vector-icons";
-import {Button, StyleSheet, Text, View} from "react-native";
+import {StyleSheet, Text, View} from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
 import Svg, {Circle, Path} from "react-native-svg";
 import {useAuth} from "@/contexts/auth.context";

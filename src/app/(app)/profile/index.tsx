@@ -1,5 +1,3 @@
-// TO DO: REDIRECT TO MY-STATUS AND FRIENDS,
-
 import {Avatar} from "@/components/Avatar";
 import {useAuth} from "@/contexts/auth.context";
 import {
@@ -19,7 +17,7 @@ export default function ProfileScreen() {
   const {user, logOut} = useAuth();
   const [myProfile, setMyprofile] = useState<Models.DefaultRow | null>(null);
   const [friendCount, setFriendCount] = useState<number>(0);
-  const router = useRouter()
+  const router = useRouter();
 
   const fetchMyProfile = async () => {
     if (!user) return;
@@ -80,7 +78,7 @@ export default function ProfileScreen() {
 
       <Pressable
         style={({pressed}) => [styles.editButton, pressed && {opacity: 0.7}]}
-        onPress={() => router.push('/(app)/profile/edit-profile')}
+        onPress={() => router.push("/(app)/profile/edit-profile")}
       >
         <Ionicons name="create-outline" size={18} color="#fff" />
         <Text style={styles.editButtonText}>Редактировать профиль</Text>
@@ -89,15 +87,30 @@ export default function ProfileScreen() {
       <View style={styles.card}>
         <View style={styles.statusFriendRow}>
           <View style={styles.statusLeft}>
-            <View style={styles.emojiBox}>
-              <Text style={styles.emojiText}>{myProfile.statusEmoji}</Text>
-            </View>
-            <View>
-              <Text style={styles.statusLabel}>МОЙ СТАТУС</Text>
-              <Text style={styles.statusText}>{myProfile.statusText}</Text>
-            </View>
+            <Pressable
+              style={({pressed}) => [pressed && {opacity: 0.7}]}
+              onPress={() => router.replace("/(app)/my-status")}
+            >
+              <View style={styles.emojiBox}>
+                <Text style={styles.emojiText}>{myProfile.statusEmoji}</Text>
+              </View>
+            </Pressable>
+            <Pressable
+              style={({pressed}) => [pressed && {opacity: 0.7}]}
+              onPress={() => router.replace("/(app)/my-status")}
+            >
+              <View>
+                <Text style={styles.statusLabel}>МОЙ СТАТУС</Text>
+                <Text style={styles.statusText}>{myProfile.statusText}</Text>
+              </View>
+            </Pressable>
           </View>
-          <Text style={styles.friendCountText}>Друзей: {friendCount}</Text>
+          <Pressable
+            style={({pressed}) => [pressed && {opacity: 0.7}]}
+            onPress={() => router.replace("/(app)/friends")}
+          >
+            <Text style={styles.friendCountText}>Друзей: {friendCount}</Text>
+          </Pressable>
         </View>
       </View>
 

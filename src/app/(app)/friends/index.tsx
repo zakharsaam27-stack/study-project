@@ -1,5 +1,6 @@
 // TO DO: OPEN PROFILE,
-// STACKING, SEARCH BY NAME, FIX GAP WHEN EMPTY SEARCHFRIENDS RESUlt
+//  SEARCH BY NAME, DELAY FIX, LONG NAME + STATUS FIX
+// DISABLED STATE FOR ACCEPTING REQS WhiLE LOADING
 
 import {Avatar} from "@/components/Avatar";
 import {useAuth} from "@/contexts/auth.context";
