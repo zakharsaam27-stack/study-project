@@ -87,7 +87,7 @@ export default function AddFriendScreen() {
       </View>
       <Text style={styles.label}>Никнейм друга</Text>
       <View style={styles.inputRow}>
-        <Ionicons name="search" size={18} color="#888780" />
+        <Ionicons name="search" size={18} color="#888780" style={styles.searchIcon} />
         <Text style={styles.at}>@</Text>
         <TextInput
           style={styles.input}
@@ -176,10 +176,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 13,
     height: 50,
-    gap: 9,
   },
-  at: {fontSize: 15, color: "#888780"},
-  input: {flex: 1, fontSize: 15, color: "#2C2C2A"},
+  searchIcon: {marginRight: 9},
+  at: {fontSize: 15, color: "#888780", marginRight: 1},
+  input: {flex: 1, fontSize: 15, color: "#2C2C2A", paddingHorizontal: 0},
   section: {marginHorizontal: 16, marginTop: 14, gap: 10},
   sendButton: {
     height: 52,

@@ -1,7 +1,12 @@
 import {Tabs, useFocusEffect, usePathname} from "expo-router";
-import {StyleSheet, useColorScheme} from "react-native";
+import {StyleSheet, Text, useColorScheme, View} from "react-native";
 import {Colors} from "@/constants/theme";
-import {database_id, friendship_table_id, tablesDB} from "@/lib/appwrite";
+import {
+  client,
+  database_id,
+  friendship_table_id,
+  tablesDB,
+} from "@/lib/appwrite";
 import {useAuth} from "@/contexts/auth.context";
 import {Models, Query} from "react-native-appwrite";
 import {useCallback, useState} from "react";
@@ -11,7 +16,6 @@ import {useHideTabBar} from "@/contexts/tabbar.context";
 export default function AppTabs() {
   const scheme = useColorScheme();
   const [requests, setRequests] = useState<Models.DefaultRow[] | null>(null);
-  const [friendReqs, setFriendReqs] = useState(false);
   const colors = Colors[scheme === "unspecified" ? "light" : scheme];
   const {user} = useAuth();
   const {isTabBarHidden} = useHideTabBar();
@@ -32,7 +36,14 @@ export default function AppTabs() {
   useFocusEffect(
     useCallback(() => {
       fetchRequests();
-      isFriendReqs();
+
+      const unsubscribe = client.subscribe(
+        `databases.${database_id}.tables.${friendship_table_id}.rows`,
+        () => {
+          fetchRequests();
+        },
+      );
+      return () => unsubscribe();
     }, [user]),
   );
 
@@ -54,13 +65,8 @@ export default function AppTabs() {
     paddingTop: 6,
   };
 
-  const isFriendReqs = () => {
-    if (requests?.length !== 0) {
-      setFriendReqs(true);
-    } else {
-      setFriendReqs(false);
-    }
-  };
+  const isFriendReqs = (requests?.length ?? 0) > 0;
+  const reqCount = requests?.length
 
   return (
     <Tabs
@@ -105,11 +111,22 @@ export default function AppTabs() {
         options={{
           title: "Друзья",
           tabBarIcon: ({color, focused}) => (
-            <Ionicons
-              name={focused ? "people-circle-outline" : "people-circle-outline"}
-              size={24}
-              color={color}
-            />
+            <View style={styles.friendsIconWrap}>
+              <Ionicons
+                name={
+                  focused ? "people-circle-outline" : "people-circle-outline"
+                }
+                size={24}
+                color={color}
+              />
+              {isFriendReqs && (
+                <View style={styles.badge}>
+                  <Text style={styles.reqCount}>
+                    {(reqCount ?? 0) < 10 ? reqCount : "9+"}
+                  </Text>
+                </View>
+              )}
+            </View>
           ),
         }}
       />
@@ -129,3 +146,26 @@ export default function AppTabs() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  badge: {
+    position: "absolute",
+    top: -2,
+    right: -4,
+    minWidth: 14,
+    height: 14,
+    borderRadius: 999,
+    backgroundColor: "#FA3E3E",
+    alignItems: "center",
+    paddingHorizontal: 2,
+    justifyContent: "center",
+  },
+  friendsIconWrap: {
+    position: "relative",
+  },
+  reqCount: {
+    fontSize: 8,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+});

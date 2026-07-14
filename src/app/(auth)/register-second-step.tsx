@@ -1,33 +1,67 @@
 import {useReg} from "@/contexts/reg.context";
+import {database_id, profiles_table_id, tablesDB} from "@/lib/appwrite";
 import {useRouter} from "expo-router";
-import {useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {Pressable, StyleSheet, Text, TextInput, View} from "react-native";
+import {Query} from "react-native-appwrite";
 import {SafeAreaView} from "react-native-safe-area-context";
 
 export default function SecondStepScreen() {
   const {nickname, setNickname} = useReg();
   const [error, setError] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [wrongNickname, setWrongNickname] = useState(false);
+  const [isUniqueName, setIsUniqueName] = useState(true);
   const router = useRouter();
 
-  const spaceCheck = (text: string) => {
-    if (text.includes(" ")) {
-      setError("Никнейм не должен содержать пробелы");
-    } else {
-      setError("");
-    }
-  };
+  const appropriateSybmols = /^[a-zA-Z0-9_]+$/;
 
-  const emptyNameCheck = () => {
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const appropriateSybmolsCheck = () => {
     if (nickname.trim() === "") {
       setError("Заполните все поля");
       return false;
     }
-    if (nickname.includes(" ")) {
-      setError("Никнейм не должен содержать пробелы");
+    if (!appropriateSybmols.test(nickname)) {
+      setWrongNickname(true);
       return false;
     }
+    setError("");
+    setWrongNickname(false);
     return true;
+  };
+
+  const uniqueNicknameCheck = async (text: string) => {
+    const searchForSameResult = await tablesDB.listRows({
+      databaseId: database_id,
+      tableId: profiles_table_id,
+      queries: [Query.equal("nickname", text.trim().toLowerCase())],
+    });
+
+    if (searchForSameResult.total > 0) {
+      setIsUniqueName(false);
+      return false;
+    } else {
+      setIsUniqueName(true);
+      return true;
+    }
+  };
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const nicknameOnChange = (text: string) => {
+    setNickname(text.trim().toLowerCase());
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(() => {
+      uniqueNicknameCheck(text);
+    }, 500);
   };
 
   return (
@@ -46,8 +80,12 @@ export default function SecondStepScreen() {
         </View>
 
         <View style={styles.fieldGroup}>
-          <View style={[styles.inputRing, isFocused && styles.inputRingFocused]}>
-            <View style={[styles.inputRow, isFocused && styles.inputRowFocused]}>
+          <View
+            style={[styles.inputRing, isFocused && styles.inputRingFocused]}
+          >
+            <View
+              style={[styles.inputRow, isFocused && styles.inputRowFocused]}
+            >
               <Text style={styles.atSign}>@</Text>
               <TextInput
                 style={styles.nickInput}
@@ -55,18 +93,36 @@ export default function SecondStepScreen() {
                 placeholderTextColor="#A8A79F"
                 autoCapitalize="none"
                 onChangeText={(text) => {
-                  spaceCheck(text);
-                  setNickname(text);
+                  nicknameOnChange(text);
                 }}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
               />
             </View>
           </View>
+          <View>
+              {isUniqueName ? (
+                <View>
+                  <Text>Никнейм свободен</Text>
+                </View>
+              ) : (
+                <View>
+                  <Text>
+                    Никнейм занят
+                  </Text>
+                </View>
+              )}
+            </View>
           {error ? (
             <Text style={styles.errorText}>{error}</Text>
           ) : (
-            <Text style={styles.hint}>Только буквы, цифры и нижнее подчёркивание</Text>
+            <Text
+              style={[
+                wrongNickname ? [styles.hint, {color: "#E24B4A"}] : styles.hint,
+              ]}
+            >
+              Только буквы, цифры и нижнее подчёркивание
+            </Text>
           )}
         </View>
 
@@ -74,9 +130,14 @@ export default function SecondStepScreen() {
 
         <Pressable
           style={({pressed}) => [styles.btn, pressed && {opacity: 0.7}]}
-          onPress={() => {
-            if (emptyNameCheck()) router.push("/(auth)/register-third-step");
-          }}>
+          onPress={async () => {
+            if (
+              appropriateSybmolsCheck() &&
+              (await uniqueNicknameCheck(nickname))
+            )
+              router.push("/(auth)/register-third-step");
+          }}
+        >
           <Text style={styles.btnText}>Продолжить</Text>
         </Pressable>
       </View>

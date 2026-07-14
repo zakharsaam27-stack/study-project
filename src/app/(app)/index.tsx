@@ -1,6 +1,5 @@
 // TO DO: FREE AND BUSY,
 
-import {Ionicons} from "@expo/vector-icons";
 import {StyleSheet, Text, View} from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
 import Svg, {Circle, Path} from "react-native-svg";
@@ -16,6 +15,21 @@ import {
   tablesDB,
 } from "@/lib/appwrite";
 import {Avatar} from "@/components/Avatar";
+
+function pluralize(
+  count: number,
+  forms: {one: string; few: string; many: string},
+) {
+  const lastDigit = count % 10;
+  const lastTwoDigit = count % 100
+  if (lastDigit === 1 && lastTwoDigit !== 11) {
+    return forms.one;
+  } else if ([2, 3, 4].includes(lastDigit) && ![12, 13, 14].includes(lastTwoDigit)) {
+    return forms.few;
+  } else {
+    return forms.many;
+  }
+}
 
 export default function HomeScreen() {
   const [friendList, setFriendList] = useState<Models.DefaultRow[]>([]);
@@ -109,12 +123,20 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>PingMe</Text>
-        <Ionicons name="notifications-outline" size={22} color="#2C2C2A" />
       </View>
       <View style={styles.freeRow}>
         <Text style={styles.freeText}>
-          <Text style={styles.freeTextBold}>{friendList.length} друга </Text>
-          свободны сейчас
+          <Text style={styles.freeTextBold}>
+            <Text>
+              {friendList.length}{" "}
+              {pluralize(friendList.length, {
+                one: "друг",
+                few: "друга",
+                many: "друзей",
+              })}
+            </Text>
+          </Text>
+          {friendList.length === 1 ? " свободен" : " свободны"} сейчас
         </Text>
       </View>
       {friendsProfiles.length === 0 ? (
