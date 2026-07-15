@@ -9,13 +9,12 @@
 //   3. Fill in APPWRITE_API_KEY and MY_USER_ID below (your own $id, found
 //      in Appwrite Console > Auth > Users, or by logging user.$id once
 //      from useAuth() in the app)
-//   4. node scripts/seed-friends.js
+//   4. node --env-file=.env scripts/seed-friends.js
 
-require("dotenv").config();
 const {Client, TablesDB, ID} = require("node-appwrite");
 
-const APPWRITE_API_KEY = "PASTE_YOUR_API_KEY_HERE";
-const MY_USER_ID = "PASTE_YOUR_USER_ID_HERE";
+const APPWRITE_API_KEY = "api key here";
+const MY_USER_ID = "my user id";
 const FRIEND_COUNT = 10;
 
 const client = new Client()

@@ -167,7 +167,10 @@ export default function FriendsScreen() {
   );
 
   const showStatusSafely = (nickname: string, name: string, status: string) => {
-    if ((nickname.length + status.length > 29) || (name.length + status.length > 29)) {
+    if (
+      nickname.length + status.length > 29 ||
+      name.length + status.length > 29
+    ) {
       return status.slice(0, 13) + "...";
     } else {
       return status;
@@ -188,7 +191,7 @@ export default function FriendsScreen() {
           <Text style={styles.addButtonText}>Добавить</Text>
         </Pressable>
       </View>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView style={{flex: 1}} contentContainerStyle={styles.scrollContent}>
         <View style={styles.searchBar}>
           <Ionicons name="search" size={18} color="#888780" />
           <TextInput
@@ -200,7 +203,7 @@ export default function FriendsScreen() {
           />
         </View>
 
-        {searchFriend && (
+        {searchFriend ? (
           <View style={styles.searchResult}>
             {filteredFriends.length !== 0 ? (
               filteredFriends.map((friend) => (
@@ -223,7 +226,11 @@ export default function FriendsScreen() {
                   <View style={[styles.statusPill]}>
                     <Text style={[styles.statusText]}>
                       {friend.statusEmoji as string}
-                      {showStatusSafely(friend.nickname, friend.name, friend.statusText)}
+                      {showStatusSafely(
+                        friend.nickname,
+                        friend.name,
+                        friend.statusText,
+                      )}
                     </Text>
                   </View>
                 </View>
@@ -234,87 +241,101 @@ export default function FriendsScreen() {
               </View>
             )}
           </View>
-        )}
-
-        <Pressable
-          style={({pressed}) => [
-            styles.requestsCard,
-            pressed && {opacity: 0.7},
-          ]}
-          onPress={() => router.push("/(app)/friends/requests")}
-        >
-          <View style={styles.requestsIcon}>
-            <Ionicons name="person-add" size={18} color="#fff" />
-          </View>
-          <View style={styles.friendInfo}>
-            <Text style={styles.requestsTitle}>Входящие заявки</Text>
-            <Text style={styles.requestsSubtitle}>
-              {requests.length} человек хотят дружить
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={22} color="#D85A30" />
-        </Pressable>
-        <Text style={styles.sectionLabel}>Все друзья</Text>
-
-        {friendsProfiles.length === 0 ? (
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIcon}>
-              <Ionicons name="person-add-outline" size={50} color="#B0AEA3" />
-            </View>
-            <Text style={styles.emptyTitle}>У тебя пока нет друзей</Text>
-            <Text style={styles.emptySubtitle}>
-              Добавь друзей по нику или поделись своей ссылкой.
-            </Text>
-          </View>
         ) : (
           <View>
-            {friendsProfiles.map((friend) => {
-              const friendShipRow = friendList.find(
-                (r) => r.addresseeId === friend.$id,
-              );
-              return (
-                <View key={friend.$id} style={styles.friendCardRow}>
-                  <Swipeable
-                    renderRightActions={() =>
-                      renderRightActions(friendShipRow?.$id ?? "")
-                    }
-                    rightThreshold={44}
-                    overshootRight={false}
-                  >
-                    <View
-                      style={[styles.friendCard, styles.friendCardNoMargin]}
-                    >
-                      <View style={styles.avatarWrapper}>
-                        <View style={styles.avatar}>
-                          <Avatar
-                            source={
-                              friend.avatarURL ? {uri: friend.avatarURL} : null
-                            }
-                            name={friend.name}
-                            size={42}
-                          />
-                        </View>
-                      </View>
-                      <View style={styles.friendInfo}>
-                        <Text style={styles.friendName}>
-                          {friend.name as string}
-                        </Text>
-                        <Text style={styles.friendNickname}>
-                          @{friend.nickname as string}
-                        </Text>
-                      </View>
-                      <View style={[styles.statusPill]}>
-                        <Text style={[styles.statusText]}>
-                          {friend.statusEmoji as string}
-                          {showStatusSafely(friend.nickname, friend.name, friend.statusText)}
-                        </Text>
-                      </View>
-                    </View>
-                  </Swipeable>
+            <Pressable
+              style={({pressed}) => [
+                styles.requestsCard,
+                pressed && {opacity: 0.7},
+              ]}
+              onPress={() => router.push("/(app)/friends/requests")}
+            >
+              <View style={styles.requestsIcon}>
+                <Ionicons name="person-add" size={18} color="#fff" />
+              </View>
+              <View style={styles.friendInfo}>
+                <Text style={styles.requestsTitle}>Входящие заявки</Text>
+                <Text style={styles.requestsSubtitle}>
+                  {requests.length} человек хотят дружить
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={22} color="#D85A30" />
+            </Pressable>
+            <Text style={styles.sectionLabel}>Все друзья</Text>
+
+            {friendsProfiles.length === 0 ? (
+              <View style={styles.emptyState}>
+                <View style={styles.emptyIcon}>
+                  <Ionicons
+                    name="person-add-outline"
+                    size={50}
+                    color="#B0AEA3"
+                  />
                 </View>
-              );
-            })}
-            <Text style={styles.hint}>Смахни влево, чтобы удалить друга</Text>
+                <Text style={styles.emptyTitle}>У тебя пока нет друзей</Text>
+                <Text style={styles.emptySubtitle}>
+                  Добавь друзей по нику или поделись своей ссылкой.
+                </Text>
+              </View>
+            ) : (
+              <View>
+                {friendsProfiles.map((friend) => {
+                  const friendShipRow = friendList.find(
+                    (r) => r.addresseeId === friend.$id,
+                  );
+                  return (
+                    <View key={friend.$id} style={styles.friendCardRow}>
+                      <Swipeable
+                        renderRightActions={() =>
+                          renderRightActions(friendShipRow?.$id ?? "")
+                        }
+                        rightThreshold={44}
+                        overshootRight={false}
+                      >
+                        <View
+                          style={[styles.friendCard, styles.friendCardNoMargin]}
+                        >
+                          <View style={styles.avatarWrapper}>
+                            <View style={styles.avatar}>
+                              <Avatar
+                                source={
+                                  friend.avatarURL
+                                    ? {uri: friend.avatarURL}
+                                    : null
+                                }
+                                name={friend.name}
+                                size={42}
+                              />
+                            </View>
+                          </View>
+                          <View style={styles.friendInfo}>
+                            <Text style={styles.friendName}>
+                              {friend.name as string}
+                            </Text>
+                            <Text style={styles.friendNickname}>
+                              @{friend.nickname as string}
+                            </Text>
+                          </View>
+                          <View style={[styles.statusPill]}>
+                            <Text style={[styles.statusText]}>
+                              {friend.statusEmoji as string}
+                              {showStatusSafely(
+                                friend.nickname,
+                                friend.name,
+                                friend.statusText,
+                              )}
+                            </Text>
+                          </View>
+                        </View>
+                      </Swipeable>
+                    </View>
+                  );
+                })}
+                <Text style={styles.hint}>
+                  Смахни влево, чтобы удалить друга
+                </Text>
+              </View>
+            )}
           </View>
         )}
       </ScrollView>
@@ -324,8 +345,8 @@ export default function FriendsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: "#F1EFE8"},
-  scrollContent: {flexGrow: 1},
+  container: {backgroundColor: "#F1EFE8"},
+  scrollContent: {paddingBottom: 100},
   errorText: {
     textAlign: "center",
     fontSize: 13,
@@ -476,7 +497,7 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   searchEmptyState: {
-    paddingVertical: 3,
+    marginBottom: 4,
     alignItems: "center",
   },
   searchEmptyText: {

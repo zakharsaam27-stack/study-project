@@ -58,10 +58,6 @@ export default function AppTabs() {
     backgroundColor: colors.background,
     borderTopColor: colors.backgroundElement,
     borderTopWidth: StyleSheet.hairlineWidth,
-    shadowColor: "#000",
-    shadowOffset: {width: 0, height: -2},
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
     paddingTop: 6,
   };
 

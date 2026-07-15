@@ -1,6 +1,4 @@
-// TO DO: FREE AND BUSY,
-
-import {ScrollView, SectionList, StyleSheet, Text, View} from "react-native";
+import {SectionList, StyleSheet, Text, View} from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
 import Svg, {Circle, Path} from "react-native-svg";
 import {useAuth} from "@/contexts/auth.context";
@@ -175,6 +173,8 @@ export default function HomeScreen() {
         </View>
       ) : (
         <SectionList
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.list}  
         sections={sections}
           keyExtractor={(item) => item.$id}
@@ -232,7 +232,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+
     backgroundColor: "#F1EFE8",
   },
   header: {
@@ -277,7 +277,8 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingHorizontal: 18,
-    gap: 4
+    gap: 4,
+    paddingBottom: 10
   },
   friendCard: {
     backgroundColor: "#FFFFFF",
