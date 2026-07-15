@@ -35,28 +35,19 @@ function pluralize(
 }
 
 export default function HomeScreen() {
-  const [friendList, setFriendList] = useState<Models.DefaultRow[]>([]);
   const [friendsProfiles, setFriendsProfiles] = useState<Models.DefaultRow[]>(
     [],
   );
-  const [friendsBusyProfiles, setFriendsBusyProfiles] = useState<
-    Models.DefaultRow[]
-  >([]);
-  const [friendsFreeProfiles, setFriendsFreeProfiles] = useState<
-    Models.DefaultRow[]
-  >([]);
 
   const {user} = useAuth();
 
   useFocusEffect(
     useCallback(() => {
-      fetchFriendList();
       fetchFriendsProfiles();
 
       const unsubscribeFriends = client.subscribe(
         `databases.${database_id}.tables.${friendship_table_id}.rows`,
         () => {
-          fetchFriendList();
           fetchFriendsProfiles();
         },
       );
@@ -94,18 +85,6 @@ export default function HomeScreen() {
     }
   };
 
-  const fetchFriendList = async () => {
-    const fetchFriendListResult = await tablesDB.listRows({
-      databaseId: database_id,
-      tableId: friendship_table_id,
-      queries: [
-        Query.equal("status", "accepted"),
-        Query.equal("requesterId", user.$id),
-      ],
-    });
-    setFriendList(fetchFriendListResult.rows);
-  };
-
   const fetchFriendsProfiles = async () => {
     const fetchFriendListResult = await tablesDB.listRows({
       databaseId: database_id,
@@ -126,12 +105,6 @@ export default function HomeScreen() {
       ),
     );
     setFriendsProfiles(profiles);
-
-    const freeProfiles = profiles.filter((p) => p.busyness === "free");
-    setFriendsFreeProfiles(freeProfiles);
-
-    const busyProfiles = profiles.filter((p) => p.busyness === "busy");
-    setFriendsBusyProfiles(busyProfiles);
   };
 
   const showStatusSafely = (status: string, statusUpdatedAt: string) => {
@@ -143,6 +116,25 @@ export default function HomeScreen() {
       return status;
     }
   };
+
+  const sections = [
+    {
+      title: "free",
+      data: friendsProfiles.filter((f) => f.busyness === "free"),
+      dotStyle: styles.freeDot,
+      verb: {one: " свободен ", many: " свободны "},
+      pillStyle: styles.freeStatusPill,
+      textStyle: styles.freeStatusText,
+    },
+    {
+      title: "busy",
+      data: friendsProfiles.filter((f) => f.busyness === "busy"),
+      dotStyle: styles.busyDot,
+      verb: {one: " занят ", many: " заняты "},
+      pillStyle: styles.busyStatusPill,
+      textStyle: styles.busyStatusText,
+    },
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -182,110 +174,57 @@ export default function HomeScreen() {
           </Text>
         </View>
       ) : (
-        <View>
-          <View style={styles.freeRow}>
-            <View style={styles.freeDot} />
-            <Text style={styles.freeText}>
-              <Text style={styles.freeTextBold}>
-                <Text>
-                  {friendsFreeProfiles.length}{" "}
-                  {pluralize(friendsFreeProfiles.length, {
-                    one: "друг",
-                    few: "друга",
-                    many: "друзей",
-                  })}
-                </Text>
-              </Text>
-              {friendsFreeProfiles.length === 1 ? " свободен" : " свободны"}{" "}
-              сейчас
-            </Text>
-          </View>
-
-          <View style={styles.list}>
-            {friendsFreeProfiles.map((friend) => (
-              <View style={styles.friendCard} key={friend.$id}>
-                <View style={styles.avatarWrapper}>
-                  <View style={styles.avatar}>
-                    <Avatar
-                      source={friend.avatarURL ? {uri: friend.avatarURL} : null}
-                      name={friend.name}
-                      size={44}
-                    />
-                  </View>
-                </View>
-                <View style={styles.friendInfo}>
-                  <Text style={styles.friendName}>{friend.name as string}</Text>
-                  <View style={styles.freeStatusPill}>
-                    <Text style={styles.freeStatusText}>
-                      {friend.statusEmoji}
-                      {showStatusSafely(
-                        friend.statusText,
-                        friend.statusUpdatedAt,
-                      )}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={styles.timeText}>
-                  {formattedStatusUpdatedAt(new Date(friend.statusUpdatedAt))}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          <SectionList>
+        <SectionList
+        contentContainerStyle={styles.list}  
+        sections={sections}
+          keyExtractor={(item) => item.$id}
+          renderSectionHeader={({section}) => (
             <View style={styles.freeRow}>
-              <View style={styles.busyDot} />
+              <View style={section.dotStyle} />
               <Text style={styles.freeText}>
                 <Text style={styles.freeTextBold}>
                   <Text>
-                    {friendsBusyProfiles.length}{" "}
-                    {pluralize(friendsBusyProfiles.length, {
+                    {section.data.length}{" "}
+                    {pluralize(section.data.length, {
                       one: "друг",
                       few: "друга",
                       many: "друзей",
                     })}
                   </Text>
                 </Text>
-                {friendsBusyProfiles.length === 1 ? " занят" : " заняты"} сейчас
+                {section.data.length === 1
+                  ? section.verb.one
+                  : section.verb.many}
+                сейчас
               </Text>
             </View>
-
-            <View style={styles.list}>
-              {friendsBusyProfiles.map((friend) => (
-                <View style={styles.friendCard} key={friend.$id}>
-                  <View style={styles.avatarWrapper}>
-                    <View style={styles.avatar}>
-                      <Avatar
-                        source={
-                          friend.avatarURL ? {uri: friend.avatarURL} : null
-                        }
-                        name={friend.name}
-                        size={44}
-                      />
-                    </View>
-                  </View>
-                  <View style={styles.friendInfo}>
-                    <Text style={styles.friendName}>
-                      {friend.name as string}
-                    </Text>
-                    <View style={styles.busyStatusPill}>
-                      <Text style={styles.busyStatusText}>
-                        {friend.statusEmoji}
-                        {showStatusSafely(
-                          friend.statusText,
-                          friend.statusUpdatedAt,
-                        )}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text style={styles.timeText}>
-                    {formattedStatusUpdatedAt(new Date(friend.statusUpdatedAt))}
+          )}
+          renderItem={({item, section}) => (
+            <View style={styles.friendCard}>
+              <View style={styles.avatarWrapper}>
+                <View style={styles.avatar}>
+                  <Avatar
+                    source={item.avatarURL ? {uri: item.avatarURL} : null}
+                    name={item.name}
+                    size={44}
+                  />
+                </View>
+              </View>
+              <View style={styles.friendInfo}>
+                <Text style={styles.friendName}>{item.name as string}</Text>
+                <View style={section.pillStyle}>
+                  <Text style={section.textStyle}>
+                    {item.statusEmoji}
+                    {showStatusSafely(item.statusText, item.statusUpdatedAt)}
                   </Text>
                 </View>
-              ))}
+              </View>
+              <Text style={styles.timeText}>
+                {formattedStatusUpdatedAt(new Date(item.statusUpdatedAt))}
+              </Text>
             </View>
-          </SectionList>
-        </View>
+          )}
+        />
       )}
     </SafeAreaView>
   );
@@ -313,9 +252,10 @@ const styles = StyleSheet.create({
   freeRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 10,
-    gap: 8,
+    paddingHorizontal: 4,
+    gap: 6,
+    backgroundColor: "#F1EFE8",
+    paddingVertical: 8
   },
   freeText: {
     fontSize: 14,
@@ -337,7 +277,7 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingHorizontal: 18,
-    gap: 10,
+    gap: 4
   },
   friendCard: {
     backgroundColor: "#FFFFFF",
@@ -348,6 +288,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    marginBottom: 10
   },
   avatarWrapper: {
     position: "relative",
@@ -409,7 +350,7 @@ const styles = StyleSheet.create({
   timeText: {
     fontSize: 12,
     color: "#888780",
-    alignSelf: "flex-start",
+    alignSelf: "center",
     marginTop: 2,
   },
   emptyState: {
@@ -443,15 +384,15 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   freeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: "#6BCF9A",
   },
   busyDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: "#6E6E73",
   },
 });

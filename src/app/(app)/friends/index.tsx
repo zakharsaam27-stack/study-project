@@ -166,8 +166,8 @@ export default function FriendsScreen() {
       f.nickname.startsWith(searchFriend) || f.name.startsWith(searchFriend),
   );
 
-  const showStatusSafely = (nickname: string, status: string) => {
-    if (nickname.length + status.length > 29) {
+  const showStatusSafely = (nickname: string, name: string, status: string) => {
+    if ((nickname.length + status.length > 29) || (name.length + status.length > 29)) {
       return status.slice(0, 13) + "...";
     } else {
       return status;
@@ -223,7 +223,7 @@ export default function FriendsScreen() {
                   <View style={[styles.statusPill]}>
                     <Text style={[styles.statusText]}>
                       {friend.statusEmoji as string}
-                      {showStatusSafely(friend.nickname, friend.statusText)}
+                      {showStatusSafely(friend.nickname, friend.name, friend.statusText)}
                     </Text>
                   </View>
                 </View>
@@ -306,7 +306,7 @@ export default function FriendsScreen() {
                       <View style={[styles.statusPill]}>
                         <Text style={[styles.statusText]}>
                           {friend.statusEmoji as string}
-                          {showStatusSafely(friend.nickname, friend.statusText)}
+                          {showStatusSafely(friend.nickname, friend.name, friend.statusText)}
                         </Text>
                       </View>
                     </View>
