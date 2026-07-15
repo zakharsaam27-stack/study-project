@@ -1,6 +1,6 @@
 // TO DO: FREE AND BUSY,
 
-import {ScrollView, StyleSheet, Text, View} from "react-native";
+import {ScrollView, SectionList, StyleSheet, Text, View} from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
 import Svg, {Circle, Path} from "react-native-svg";
 import {useAuth} from "@/contexts/auth.context";
@@ -21,10 +21,13 @@ function pluralize(
   forms: {one: string; few: string; many: string},
 ) {
   const lastDigit = count % 10;
-  const lastTwoDigit = count % 100
+  const lastTwoDigit = count % 100;
   if (lastDigit === 1 && lastTwoDigit !== 11) {
     return forms.one;
-  } else if ([2, 3, 4].includes(lastDigit) && ![12, 13, 14].includes(lastTwoDigit)) {
+  } else if (
+    [2, 3, 4].includes(lastDigit) &&
+    ![12, 13, 14].includes(lastTwoDigit)
+  ) {
     return forms.few;
   } else {
     return forms.many;
@@ -36,6 +39,12 @@ export default function HomeScreen() {
   const [friendsProfiles, setFriendsProfiles] = useState<Models.DefaultRow[]>(
     [],
   );
+  const [friendsBusyProfiles, setFriendsBusyProfiles] = useState<
+    Models.DefaultRow[]
+  >([]);
+  const [friendsFreeProfiles, setFriendsFreeProfiles] = useState<
+    Models.DefaultRow[]
+  >([]);
 
   const {user} = useAuth();
 
@@ -117,37 +126,28 @@ export default function HomeScreen() {
       ),
     );
     setFriendsProfiles(profiles);
+
+    const freeProfiles = profiles.filter((p) => p.busyness === "free");
+    setFriendsFreeProfiles(freeProfiles);
+
+    const busyProfiles = profiles.filter((p) => p.busyness === "busy");
+    setFriendsBusyProfiles(busyProfiles);
   };
 
   const showStatusSafely = (status: string, statusUpdatedAt: string) => {
-    if (formattedStatusUpdatedAt(new Date(statusUpdatedAt)) === 'Только что') {
+    if (formattedStatusUpdatedAt(new Date(statusUpdatedAt)) === "Только что") {
       if (status.length === 25) {
-        return status.slice(0, 21) + '...'
+        return status.slice(0, 21) + "...";
       }
     } else {
-      return status
+      return status;
     }
-  }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>PingMe</Text>
-      </View>
-      <View style={styles.freeRow}>
-        <Text style={styles.freeText}>
-          <Text style={styles.freeTextBold}>
-            <Text>
-              {friendList.length}{" "}
-              {pluralize(friendList.length, {
-                one: "друг",
-                few: "друга",
-                many: "друзей",
-              })}
-            </Text>
-          </Text>
-          {friendList.length === 1 ? " свободен" : " свободны"} сейчас
-        </Text>
       </View>
       {friendsProfiles.length === 0 ? (
         <View style={styles.emptyState}>
@@ -182,32 +182,110 @@ export default function HomeScreen() {
           </Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.list}>
-          {friendsProfiles.map((friend) => (
-            <View style={styles.friendCard} key={friend.$id}>
-              <View style={styles.avatarWrapper}>
-                <View style={styles.avatar}>
-                  <Avatar
-                    source={friend.avatarURL ? {uri: friend.avatarURL} : null}
-                    name={friend.name}
-                    size={44}
-                  />
+        <View>
+          <View style={styles.freeRow}>
+            <View style={styles.freeDot} />
+            <Text style={styles.freeText}>
+              <Text style={styles.freeTextBold}>
+                <Text>
+                  {friendsFreeProfiles.length}{" "}
+                  {pluralize(friendsFreeProfiles.length, {
+                    one: "друг",
+                    few: "друга",
+                    many: "друзей",
+                  })}
+                </Text>
+              </Text>
+              {friendsFreeProfiles.length === 1 ? " свободен" : " свободны"}{" "}
+              сейчас
+            </Text>
+          </View>
+
+          <View style={styles.list}>
+            {friendsFreeProfiles.map((friend) => (
+              <View style={styles.friendCard} key={friend.$id}>
+                <View style={styles.avatarWrapper}>
+                  <View style={styles.avatar}>
+                    <Avatar
+                      source={friend.avatarURL ? {uri: friend.avatarURL} : null}
+                      name={friend.name}
+                      size={44}
+                    />
+                  </View>
                 </View>
+                <View style={styles.friendInfo}>
+                  <Text style={styles.friendName}>{friend.name as string}</Text>
+                  <View style={styles.freeStatusPill}>
+                    <Text style={styles.freeStatusText}>
+                      {friend.statusEmoji}
+                      {showStatusSafely(
+                        friend.statusText,
+                        friend.statusUpdatedAt,
+                      )}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.timeText}>
+                  {formattedStatusUpdatedAt(new Date(friend.statusUpdatedAt))}
+                </Text>
               </View>
-              <View style={styles.friendInfo}>
-                <Text style={styles.friendName}>{friend.name as string}</Text>
-                <View style={styles.statusPill}>
-                  <Text style={styles.statusText}>
-                    {friend.statusEmoji} {showStatusSafely(friend.statusText, friend.statusUpdatedAt)}
+            ))}
+          </View>
+
+          <SectionList>
+            <View style={styles.freeRow}>
+              <View style={styles.busyDot} />
+              <Text style={styles.freeText}>
+                <Text style={styles.freeTextBold}>
+                  <Text>
+                    {friendsBusyProfiles.length}{" "}
+                    {pluralize(friendsBusyProfiles.length, {
+                      one: "друг",
+                      few: "друга",
+                      many: "друзей",
+                    })}
                   </Text>
-                </View>
-              </View>
-              <Text style={styles.timeText}>
-                {formattedStatusUpdatedAt(new Date(friend.statusUpdatedAt))}
+                </Text>
+                {friendsBusyProfiles.length === 1 ? " занят" : " заняты"} сейчас
               </Text>
             </View>
-          ))}
-        </ScrollView>
+
+            <View style={styles.list}>
+              {friendsBusyProfiles.map((friend) => (
+                <View style={styles.friendCard} key={friend.$id}>
+                  <View style={styles.avatarWrapper}>
+                    <View style={styles.avatar}>
+                      <Avatar
+                        source={
+                          friend.avatarURL ? {uri: friend.avatarURL} : null
+                        }
+                        name={friend.name}
+                        size={44}
+                      />
+                    </View>
+                  </View>
+                  <View style={styles.friendInfo}>
+                    <Text style={styles.friendName}>
+                      {friend.name as string}
+                    </Text>
+                    <View style={styles.busyStatusPill}>
+                      <Text style={styles.busyStatusText}>
+                        {friend.statusEmoji}
+                        {showStatusSafely(
+                          friend.statusText,
+                          friend.statusUpdatedAt,
+                        )}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={styles.timeText}>
+                    {formattedStatusUpdatedAt(new Date(friend.statusUpdatedAt))}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </SectionList>
+        </View>
       )}
     </SafeAreaView>
   );
@@ -298,7 +376,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#2C2C2A",
   },
-  statusPill: {
+  freeStatusPill: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#E1F5EE",
@@ -308,10 +386,25 @@ const styles = StyleSheet.create({
     gap: 5,
     alignSelf: "flex-start",
   },
-  statusText: {
+  busyStatusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F1EFE8",
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    gap: 5,
+    alignSelf: "flex-start",
+  },
+  freeStatusText: {
     fontSize: 12,
     fontWeight: "500",
     color: "#085041",
+  },
+  busyStatusText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#5F5E5A",
   },
   timeText: {
     fontSize: 12,
@@ -348,5 +441,17 @@ const styles = StyleSheet.create({
     textAlign: "center",
     maxWidth: 250,
     marginTop: 8,
+  },
+  freeDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#6BCF9A",
+  },
+  busyDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#6E6E73",
   },
 });

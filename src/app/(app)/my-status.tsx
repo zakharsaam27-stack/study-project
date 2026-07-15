@@ -692,10 +692,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   statusToggleDotFree: {
-    backgroundColor: "#7CC8A9",
+    backgroundColor: "#6BCF9A",
   },
   statusToggleDotBusy: {
-    backgroundColor: "#D9776A",
+    backgroundColor: "#6E6E73",
   },
   statusToggleText: {
     fontSize: 14,
