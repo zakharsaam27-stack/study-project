@@ -29,8 +29,6 @@ import {Models, Query} from "react-native-appwrite";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import {SafeAreaView} from "react-native-safe-area-context";
 
-const isFreeStatus = (statusText: string) => statusText === "Свободен";
-
 export default function FriendsScreen() {
   const [requests, setRequests] = useState<Models.DefaultRow[]>([]);
   const [friendList, setFriendList] = useState<Models.DefaultRow[]>([]);
@@ -163,9 +161,18 @@ export default function FriendsScreen() {
     setFriendsProfiles(profiles);
   };
 
-  const filteredFriends = friendsProfiles.filter((f) =>
-    f.nickname.startsWith(searchFriend),
+  const filteredFriends = friendsProfiles.filter(
+    (f) =>
+      f.nickname.startsWith(searchFriend) || f.name.startsWith(searchFriend),
   );
+
+  const showStatusSafely = (nickname: string, status: string) => {
+    if (nickname.length + status.length > 29) {
+      return status.slice(0, 13) + "...";
+    } else {
+      return status;
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -213,22 +220,10 @@ export default function FriendsScreen() {
                       @{friend.nickname as string}
                     </Text>
                   </View>
-                  <View
-                    style={[
-                      styles.statusPill,
-                      !isFreeStatus(friend.statusText as string) &&
-                        styles.statusPillBusy,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusText,
-                        !isFreeStatus(friend.statusText as string) &&
-                          styles.statusTextBusy,
-                      ]}
-                    >
+                  <View style={[styles.statusPill]}>
+                    <Text style={[styles.statusText]}>
                       {friend.statusEmoji as string}
-                      {friend.statusText as string}
+                      {showStatusSafely(friend.nickname, friend.statusText)}
                     </Text>
                   </View>
                 </View>
@@ -308,22 +303,10 @@ export default function FriendsScreen() {
                           @{friend.nickname as string}
                         </Text>
                       </View>
-                      <View
-                        style={[
-                          styles.statusPill,
-                          !isFreeStatus(friend.statusText as string) &&
-                            styles.statusPillBusy,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.statusText,
-                            !isFreeStatus(friend.statusText as string) &&
-                              styles.statusTextBusy,
-                          ]}
-                        >
-                          {friend.statusEmoji as string}{" "}
-                          {friend.statusText as string}
+                      <View style={[styles.statusPill]}>
+                        <Text style={[styles.statusText]}>
+                          {friend.statusEmoji as string}
+                          {showStatusSafely(friend.nickname, friend.statusText)}
                         </Text>
                       </View>
                     </View>
@@ -493,7 +476,7 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   searchEmptyState: {
-    paddingVertical: 24,
+    paddingVertical: 3,
     alignItems: "center",
   },
   searchEmptyText: {

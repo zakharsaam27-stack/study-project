@@ -39,14 +39,17 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.flex}>
+        style={styles.flex}
+      >
         <ScrollView
           contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled">
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.header}>
             <Pressable
               onPress={() => router.back()}
-              style={({pressed}) => [styles.backBtn, pressed && {opacity: 0.7}]}>
+              style={({pressed}) => [styles.backBtn, pressed && {opacity: 0.7}]}
+            >
               <Ionicons name="chevron-back" size={26} color="#2C2C2A" />
             </Pressable>
             <Text style={styles.title}>Вход</Text>
@@ -80,7 +83,11 @@ export default function LoginScreen() {
                 />
                 <Pressable
                   onPress={() => setShowPassword((v) => !v)}
-                  style={({pressed}) => [styles.eyeBtn, pressed && {opacity: 0.7}]}>
+                  style={({pressed}) => [
+                    styles.eyeBtn,
+                    pressed && {opacity: 0.7},
+                  ]}
+                >
                   <Ionicons
                     name={showPassword ? "eye" : "eye-off"}
                     size={20}
@@ -90,12 +97,18 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            <Pressable
-              style={({pressed}) => [styles.forgotRow, pressed && {opacity: 0.7}]}>
-              <Text style={styles.forgotText}>Забыли пароль?</Text>
-            </Pressable>
-
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            <View style={styles.forgotNerr}>
+              {error ? <Text style={styles.error}>{error}</Text> : <Text> </Text>}
+              
+              <Pressable
+                style={({pressed}) => [
+                  styles.forgotRow,
+                  pressed && {opacity: 0.7},
+                ]}
+              >
+                <Text style={styles.forgotText}>Забыли пароль?</Text>
+              </Pressable>
+            </View>
 
             <Pressable
               style={({pressed}) => [
@@ -105,7 +118,8 @@ export default function LoginScreen() {
                 pressed && {opacity: 0.7},
               ]}
               onPress={handleLogin}
-              disabled={isSubmitting}>
+              disabled={isSubmitting}
+            >
               <Text style={[styles.btnText, styles.btnTextLight]}>Войти</Text>
             </Pressable>
 
@@ -120,7 +134,8 @@ export default function LoginScreen() {
                 styles.btn,
                 styles.btnBlack,
                 pressed && {opacity: 0.7},
-              ]}>
+              ]}
+            >
               <Ionicons name="logo-apple" size={18} color="#fff" />
               <Text style={[styles.btnText, styles.btnTextLight]}>Apple</Text>
             </Pressable>
@@ -130,7 +145,8 @@ export default function LoginScreen() {
                 styles.btn,
                 styles.btnWhite,
                 pressed && {opacity: 0.7},
-              ]}>
+              ]}
+            >
               <Ionicons name="logo-google" size={18} color="#2C2C2A" />
               <Text style={[styles.btnText, styles.btnTextDark]}>Google</Text>
             </Pressable>
@@ -218,11 +234,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "500",
     color: "#D85A30",
+    textAlign: "right",
   },
   error: {
     fontSize: 13,
-    color: "#D85A30",
-    textAlign: "center",
+    color: "#E24B4A",
+    textAlign: "left",
+    marginTop: -8,
+    flex: 1,
   },
   btn: {
     height: 50,
@@ -269,5 +288,9 @@ const styles = StyleSheet.create({
   dividerText: {
     fontSize: 13,
     color: "#888780",
+  },
+  forgotNerr: {
+    flexDirection: 'row',
+    justifyContent: 'space-between'
   },
 });

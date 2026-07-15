@@ -1,6 +1,6 @@
 // TO DO: FREE AND BUSY,
 
-import {StyleSheet, Text, View} from "react-native";
+import {ScrollView, StyleSheet, Text, View} from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
 import Svg, {Circle, Path} from "react-native-svg";
 import {useAuth} from "@/contexts/auth.context";
@@ -119,6 +119,16 @@ export default function HomeScreen() {
     setFriendsProfiles(profiles);
   };
 
+  const showStatusSafely = (status: string, statusUpdatedAt: string) => {
+    if (formattedStatusUpdatedAt(new Date(statusUpdatedAt)) === 'Только что') {
+      if (status.length === 25) {
+        return status.slice(0, 21) + '...'
+      }
+    } else {
+      return status
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -172,7 +182,7 @@ export default function HomeScreen() {
           </Text>
         </View>
       ) : (
-        <View style={styles.list}>
+        <ScrollView contentContainerStyle={styles.list}>
           {friendsProfiles.map((friend) => (
             <View style={styles.friendCard} key={friend.$id}>
               <View style={styles.avatarWrapper}>
@@ -188,7 +198,7 @@ export default function HomeScreen() {
                 <Text style={styles.friendName}>{friend.name as string}</Text>
                 <View style={styles.statusPill}>
                   <Text style={styles.statusText}>
-                    {friend.statusEmoji} {friend.statusText}
+                    {friend.statusEmoji} {showStatusSafely(friend.statusText, friend.statusUpdatedAt)}
                   </Text>
                 </View>
               </View>
@@ -197,7 +207,7 @@ export default function HomeScreen() {
               </Text>
             </View>
           ))}
-        </View>
+        </ScrollView>
       )}
     </SafeAreaView>
   );

@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   reqCount: {
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: "bold",
     color: "#fff",
   },

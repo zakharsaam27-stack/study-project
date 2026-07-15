@@ -113,7 +113,14 @@ export default function MyStatusScreen() {
     let gap = (newDate.getTime() - oldDate.getTime()) / (1000 * 60);
     if (gap < 1) {
       return "Обновлено только что";
-    } else if (1 < gap && gap < 60) {
+    } else if (gap === 1) {
+      return `Обновлено ${Math.floor(gap)} минутe назад`;
+    } else if (1 < gap && gap < 5) {
+      return `Обновлено ${Math.floor(gap)} минуты назад`;
+    } else if (5 < gap && gap < 60) {
+      return `Обновлено ${Math.floor(gap)} минут назад`;
+    }
+    else if (1 < gap && gap < 60) {
       return `Обновлено ${Math.floor(gap)} минут назад`;
     } else if (60 < gap && gap < 120) {
       return `Обновлено 1 час назад`;
@@ -121,11 +128,14 @@ export default function MyStatusScreen() {
       return `Обновлено ${Math.floor(gap / 60)} часа назад`;
     } else if (300 < gap && gap < 1440) {
       return `Обновлено ${Math.floor(gap / 60)} часов назад`;
-    } else if (1440 < gap && gap < 7200) {
+    } else if (1440 < gap && gap < 2880) {
+      return `Обновлено ${Math.floor(gap / 1440)} день назад`;
+    }
+    else if (1440 < gap && gap < 7200) {
       return `Обновлено ${Math.floor(gap / 1440)} дня назад`;
     } else if (7200 < gap) {
-      return `Обновлено ${Math.floor(gap / 1440)} дней назад`;
-    }
+      return `Обновлено ${Math.floor(gap / 1440)} дней назад`
+    };
   };
 
   const presets: StatusPreset[] = [
@@ -369,12 +379,12 @@ export default function MyStatusScreen() {
                             onChangeText={setCustomStatusText}
                             placeholder="Введите текст"
                             placeholderTextColor="#888780"
-                            maxLength={30}
+                            maxLength={25}
                             onFocus={() => setIsDescFocused(true)}
                             onBlur={() => setIsDescFocused(false)}
                           />
                           <Text style={styles.charCounter}>
-                            {customStatusText.length}/30
+                            {customStatusText.length}/25
                           </Text>
                         </View>
                       </View>

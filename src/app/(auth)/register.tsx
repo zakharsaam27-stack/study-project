@@ -1,6 +1,6 @@
 // TO DO: FORGOT PASSWORD(?),
 
-import { useReg } from "@/contexts/reg.context";
+import {useReg} from "@/contexts/reg.context";
 import {Ionicons} from "@expo/vector-icons";
 import {useFocusEffect, useRouter} from "expo-router";
 import {useCallback, useState} from "react";
@@ -17,46 +17,50 @@ import {
 import {SafeAreaView} from "react-native-safe-area-context";
 
 export default function RegisterScreen() {
-  const { setEmail, setPassword, email, password} = useReg()
+  const {setEmail, setPassword, email, password} = useReg();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const router = useRouter();
 
   useFocusEffect(
     useCallback(() => {
-      setIsSubmitting(false)
-    }, [])
-  )
+      setIsSubmitting(false);
+    }, []),
+  );
 
   const checkEmailCorectness = () => {
-    if (email.includes('@')) {
-      return true
+    if (email.includes("@")) {
+      return true;
     }
-    setError('Неверный формат электронной почты')
-    return false
-  }
+    setError("Неверный формат электронной почты");
+    return false;
+  };
 
   const checkPasswordCorectness = () => {
     if (password.length >= 8) {
-      return true
+      return true;
     }
-    setError('Пароль должен содержать минимум 8 символов')
-    return false
-  }
+    setError("Пароль должен содержать минимум 8 символов");
+    return false;
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.flex}>
+        style={styles.flex}
+      >
         <ScrollView
           contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled">
+          keyboardShouldPersistTaps="handled"
+          scrollEnabled={false}
+        >
           <View style={styles.header}>
             <Pressable
               onPress={() => router.back()}
-              style={({pressed}) => [styles.backBtn, pressed && {opacity: 0.7}]}>
+              style={({pressed}) => [styles.backBtn, pressed && {opacity: 0.7}]}
+            >
               <Ionicons name="chevron-back" size={26} color="#2C2C2A" />
             </Pressable>
             <Text style={styles.title}>Создать аккаунт</Text>
@@ -88,7 +92,11 @@ export default function RegisterScreen() {
                 />
                 <Pressable
                   onPress={() => setShowPassword((v) => !v)}
-                  style={({pressed}) => [styles.eyeBtn, pressed && {opacity: 0.7}]}>
+                  style={({pressed}) => [
+                    styles.eyeBtn,
+                    pressed && {opacity: 0.7},
+                  ]}
+                >
                   <Ionicons
                     name={showPassword ? "eye" : "eye-off"}
                     size={20}
@@ -97,6 +105,8 @@ export default function RegisterScreen() {
                 </Pressable>
               </View>
             </View>
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <Pressable
               style={({pressed}) => [
@@ -107,11 +117,12 @@ export default function RegisterScreen() {
               ]}
               onPress={() => {
                 if (checkEmailCorectness() && checkPasswordCorectness()) {
-                  setIsSubmitting(true)
-                  router.push('/(auth)/register-first-step')
+                  setIsSubmitting(true);
+                  router.push("/(auth)/register-first-step");
                 }
               }}
-              disabled={isSubmitting}>
+              disabled={isSubmitting}
+            >
               <Text style={[styles.btnText, styles.btnTextLight]}>
                 Зарегистрироваться
               </Text>
@@ -128,7 +139,8 @@ export default function RegisterScreen() {
                 styles.btn,
                 styles.btnBlack,
                 pressed && {opacity: 0.7},
-              ]}>
+              ]}
+            >
               <Ionicons name="logo-apple" size={18} color="#fff" />
               <Text style={[styles.btnText, styles.btnTextLight]}>Apple</Text>
             </Pressable>
@@ -138,7 +150,8 @@ export default function RegisterScreen() {
                 styles.btn,
                 styles.btnWhite,
                 pressed && {opacity: 0.7},
-              ]}>
+              ]}
+            >
               <Ionicons name="logo-google" size={18} color="#2C2C2A" />
               <Text style={[styles.btnText, styles.btnTextDark]}>Google</Text>
             </Pressable>
@@ -289,5 +302,10 @@ const styles = StyleSheet.create({
   dividerText: {
     fontSize: 13,
     color: "#888780",
+  },
+  errorText: {
+    fontSize: 13,
+    color: "#E24B4A",
+    textAlign: "left",
   },
 });

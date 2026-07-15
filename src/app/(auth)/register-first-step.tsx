@@ -36,6 +36,7 @@ export default function FirstStepScreen() {
         <View style={styles.fieldGroup}>
           <View style={[styles.inputRing, isFocused && styles.inputRingFocused]}>
             <TextInput
+              maxLength={30}
               autoCapitalize="none"
               style={[styles.input, isFocused && styles.inputFocused]}
               placeholder="Имя пользователя"

@@ -22,12 +22,13 @@ export default function SecondStepScreen() {
     };
   }, []);
 
-  const appropriateSybmolsCheck = () => {
-    if (nickname.trim() === "") {
+  const appropriateSybmolsCheck = (text: string) => {
+    if (text.trim() === "") {
+      setWrongNickname(true)
       setError("Заполните все поля");
       return false;
     }
-    if (!appropriateSybmols.test(nickname)) {
+    if (!appropriateSybmols.test(text)) {
       setWrongNickname(true);
       return false;
     }
@@ -59,8 +60,9 @@ export default function SecondStepScreen() {
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    debounceRef.current = setTimeout(() => {
-      uniqueNicknameCheck(text);
+    debounceRef.current = setTimeout(async () => {
+      appropriateSybmolsCheck(text)
+      await uniqueNicknameCheck(text);
     }, 500);
   };
 
@@ -88,6 +90,7 @@ export default function SecondStepScreen() {
             >
               <Text style={styles.atSign}>@</Text>
               <TextInput
+                maxLength={15}
                 style={styles.nickInput}
                 placeholder="nickname"
                 placeholderTextColor="#A8A79F"
@@ -100,19 +103,19 @@ export default function SecondStepScreen() {
               />
             </View>
           </View>
-          <View>
-              {isUniqueName ? (
-                <View>
-                  <Text>Никнейм свободен</Text>
-                </View>
-              ) : (
-                <View>
-                  <Text>
-                    Никнейм занят
-                  </Text>
-                </View>
-              )}
-            </View>
+          <View style={styles.availabilityRow}>
+            {isUniqueName ? (
+              <>
+                <View style={[styles.availabilityDot, styles.availabilityDotFree]} />
+                <Text style={styles.availabilityText}>Никнейм свободен</Text>
+              </>
+            ) : (
+              <>
+                <View style={[styles.availabilityDot, styles.availabilityDotTaken]} />
+                <Text style={styles.availabilityText}>Никнейм занят</Text>
+              </>
+            )}
+          </View>
           {error ? (
             <Text style={styles.errorText}>{error}</Text>
           ) : (
@@ -129,10 +132,15 @@ export default function SecondStepScreen() {
         <View style={styles.spacer} />
 
         <Pressable
-          style={({pressed}) => [styles.btn, pressed && {opacity: 0.7}]}
+          style={({pressed}) => [
+            styles.btn,
+            (wrongNickname || !isUniqueName) && styles.btnDisabled,
+            pressed && {opacity: 0.7},
+          ]}
+          disabled={!isUniqueName || wrongNickname}
           onPress={async () => {
             if (
-              appropriateSybmolsCheck() &&
+              appropriateSybmolsCheck(nickname) &&
               (await uniqueNicknameCheck(nickname))
             )
               router.push("/(auth)/register-third-step");
@@ -251,5 +259,29 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: "#FFFFFF",
+  },
+  btnDisabled: {
+    backgroundColor: "#D3D1C7",
+  },
+  availabilityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingLeft: 2,
+  },
+  availabilityDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  availabilityDotFree: {
+    backgroundColor: "#7CC8A9",
+  },
+  availabilityDotTaken: {
+    backgroundColor: "#D9776A",
+  },
+  availabilityText: {
+    fontSize: 12,
+    color: "#888780",
   },
 });

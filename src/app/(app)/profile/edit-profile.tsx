@@ -8,9 +8,9 @@ import {
   storage,
   tablesDB,
 } from "@/lib/appwrite";
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import {Alert, Button, Pressable, StyleSheet, Text, View} from "react-native";
-import {ID, Models, Permission, Role} from "react-native-appwrite";
+import {ID, Models, Permission, Query, Role} from "react-native-appwrite";
 import * as ImagePicker from "expo-image-picker";
 import {AvatarAsset} from "@/contexts/reg.context";
 import {useFocusEffect, useRouter} from "expo-router";
@@ -22,6 +22,8 @@ import {Ionicons} from "@expo/vector-icons";
 export default function ProfileEditScreen() {
   const [myProfile, setMyProfile] = useState<Models.DefaultRow | null>(null);
   const [newName, setNewName] = useState("");
+  const [wrongNickname, setWrongNickname] = useState(false);
+  const [isUniqueName, setIsUniqueName] = useState(true);
   const [newNickName, setNewNickName] = useState("");
   const [error, setError] = useState("");
   const [avatarAsset, setAvatarAsset] = useState<AvatarAsset | null>(null);
@@ -40,43 +42,37 @@ export default function ProfileEditScreen() {
     setNewNickName(profile.nickname);
   };
 
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useFocusEffect(
     useCallback(() => {
       fetchMyProfile();
     }, [user]),
   );
 
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
   if (!user || !myProfile) return null;
 
-  const handleChangeName = async (newName: string) => {
+  const handleChanges = async (newNickName: string, newName: string) => {
     try {
       await tablesDB.updateRow({
         databaseId: database_id,
         tableId: profiles_table_id,
         rowId: user.$id,
         data: {
-          name: newName,
+          nickname: newNickName,
+          name: newName
         },
       });
     } catch {
-      setError("Что то пошло не так при изменении имени");
+      setError("Что то пошло не так при обновлении профиля");
     }
-  };
-
-  const handleChangeNickname = async (newNickname: string) => {
-    try {
-      await tablesDB.updateRow({
-        databaseId: database_id,
-        tableId: profiles_table_id,
-        rowId: user.$id,
-        data: {
-          nickname: newNickname,
-        },
-      });
-    } catch {
-      setError("Что то пошло не так при изменении никнейма");
-    }
-  };
+  }
 
   const handlePickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -218,6 +214,50 @@ export default function ProfileEditScreen() {
     ]);
   };
 
+  const appropriateSybmols = /^[a-zA-Z0-9_]+$/;
+
+  const appropriateSybmolsCheck = (text: string) => {
+    if (text.trim() === "") {
+      setWrongNickname(true);
+      setError("Заполните все поля");
+      return false;
+    }
+    if (!appropriateSybmols.test(text)) {
+      setWrongNickname(true);
+      return false;
+    }
+    setError("");
+    setWrongNickname(false);
+    return true;
+  };
+
+  const uniqueNicknameCheck = async (text: string) => {
+    const searchForSameResult = await tablesDB.listRows({
+      databaseId: database_id,
+      tableId: profiles_table_id,
+      queries: [Query.equal("nickname", text.trim().toLowerCase())],
+    });
+
+    if (searchForSameResult.total > 0) {
+      setIsUniqueName(false);
+      return false;
+    } else {
+      setIsUniqueName(true);
+      return true;
+    }
+  };
+
+  const nicknameOnChange = (text: string) => {
+    setNewNickName(text.trim().toLowerCase());
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(async () => {
+      appropriateSybmolsCheck(text);
+      await uniqueNicknameCheck(text);
+    }, 500);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.inner}>
@@ -233,9 +273,14 @@ export default function ProfileEditScreen() {
             <Text style={styles.headerTitle}>Редактировать</Text>
           </Pressable>
           <Pressable
-            onPress={() => {
-              handleChangeName(newName);
-              handleChangeNickname(newNickName);
+            disabled={!isUniqueName || wrongNickname}
+            onPress={async () => {
+              if (
+                appropriateSybmolsCheck(newNickName) &&
+                (await uniqueNicknameCheck(newNickName))
+              ) {
+                handleChanges(newNickName, newName)
+              }
             }}
             style={({pressed}) => pressed && styles.donePressed}
           >
@@ -260,7 +305,10 @@ export default function ProfileEditScreen() {
               <Ionicons name="camera" size={17} color="#FFFFFF" />
             </View>
           </Pressable>
-          <Pressable onPress={handleChangePhoto} style={({pressed}) => pressed && styles.donePressed}>
+          <Pressable
+            onPress={handleChangePhoto}
+            style={({pressed}) => pressed && styles.donePressed}
+          >
             <Text style={styles.changePhotoText}>Изменить фото</Text>
           </Pressable>
         </View>
@@ -288,15 +336,42 @@ export default function ProfileEditScreen() {
               autoCapitalize="none"
               style={[styles.input]}
               value={newNickName}
-              onChangeText={setNewNickName}
+              onChangeText={(text) => {
+                nicknameOnChange(text);
+              }}
               placeholder="Введите никнейм"
               placeholderTextColor="#888780"
               returnKeyType="done"
             />
           </View>
-        </View>
+          <View style={styles.availabilityRow}>
+            {isUniqueName ? (
+              <>
+                <View
+                  style={[styles.availabilityDot, styles.availabilityDotFree]}
+                />
+                <Text style={styles.availabilityText}>Никнейм свободен</Text>
+              </>
+            ) : (
+              <>
+                <View
+                  style={[styles.availabilityDot, styles.availabilityDotTaken]}
+                />
+                <Text style={styles.availabilityText}>Никнейм занят</Text>
+              </>
+            )}
+          </View>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          <Text
+            style={[
+              wrongNickname ? [styles.hint, {color: "#E24B4A"}] : styles.hint,
+            ]}
+          >
+            Только буквы, цифры и нижнее подчёркивание
+          </Text>
+          {error && <Text style={styles.errorText}>{error}</Text>}
+
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -402,16 +477,41 @@ const styles = StyleSheet.create({
     fontFamily: "Courier New",
   },
   errorText: {
-    marginTop: 12,
-    fontSize: 13,
+    fontSize: 12,
     color: "#E24B4A",
-    textAlign: "center",
+    paddingLeft: 2
   },
   donePressed: {
     opacity: 0.5,
   },
   nicknameDog: {
     fontSize: 15,
-    color: "#A8A79F"
-  }
+    color: "#A8A79F",
+  },
+  availabilityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingLeft: 2,
+  },
+  availabilityDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  availabilityDotFree: {
+    backgroundColor: "#7CC8A9",
+  },
+  availabilityDotTaken: {
+    backgroundColor: "#D9776A",
+  },
+  availabilityText: {
+    fontSize: 12,
+    color: "#888780",
+  },
+  hint: {
+    fontSize: 12,
+    color: "#888780",
+    paddingLeft: 2,
+  },
 });

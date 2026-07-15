@@ -138,7 +138,9 @@ export default function ProfileScreen() {
 
       <Pressable
         style={({pressed}) => [styles.logoutButton, pressed && {opacity: 0.7}]}
-        onPress={logOut}
+        onPress={() => {
+          logOut();
+        }}
       >
         <Ionicons name="exit-outline" size={18} color="#C0392B" />
         <Text style={styles.logoutText}>Выйти из аккаунта</Text>
