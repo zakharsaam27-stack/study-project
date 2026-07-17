@@ -9,6 +9,7 @@ import {
 import React, {createContext, useContext, useEffect, useState} from "react";
 import {ID, Models, Permission, Role} from "react-native-appwrite";
 import {AvatarAsset} from "./reg.context";
+import { socket } from "@/lib/socket";
 
 type AuthContextType = {
   user: Models.User<Models.Preferences> | null;
@@ -45,6 +46,26 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
     };
     loadUser();
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      socket.disconnect()
+      return
+    }
+    const connectSocket = async () => {
+      try {
+        const { jwt } = await account.createJWT()
+        socket.auth = {
+          jwt,
+        }
+        socket.connect()
+      } catch (err) {
+        console.log(err)
+      }
+    }
+
+    connectSocket()
+  }, [user])
 
   const login = async (email: string, password: string) => {
     await account.createEmailPasswordSession(email, password);
