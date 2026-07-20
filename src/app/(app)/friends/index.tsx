@@ -1,6 +1,5 @@
 // TO DO: OPEN PROFILE,
-//  SEARCH BY NAME, DELAY FIX, LONG NAME + STATUS FIX
-// DISABLED STATE FOR ACCEPTING REQS WhiLE LOADING
+// DELAY FIX, DISABLED STATE FOR ACCEPTING REQS WhiLE LOADING
 
 import {Avatar} from "@/components/Avatar";
 import {useAuth} from "@/contexts/auth.context";
@@ -15,7 +14,7 @@ import {
 } from "@/lib/appwrite";
 import {FontAwesome6, Ionicons} from "@expo/vector-icons";
 import {useFocusEffect, useRouter} from "expo-router";
-import {useCallback, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {
   Pressable,
   ScrollView,
@@ -30,6 +29,8 @@ import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import {SafeAreaView} from "react-native-safe-area-context";
 
 export default function FriendsScreen() {
+  console.log("FriendsScreen render");
+  
   const [requests, setRequests] = useState<Models.DefaultRow[]>([]);
   const [friendList, setFriendList] = useState<Models.DefaultRow[]>([]);
   const [friendsProfiles, setFriendsProfiles] = useState<Models.DefaultRow[]>(
@@ -177,6 +178,12 @@ export default function FriendsScreen() {
     }
   };
 
+console.log({
+  requests: requests.length,
+  friendList: friendList.length,
+  friendsProfiles: friendsProfiles.length,
+});
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -191,7 +198,10 @@ export default function FriendsScreen() {
           <Text style={styles.addButtonText}>Добавить</Text>
         </Pressable>
       </View>
-      <ScrollView style={{flex: 1}} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={{flex: 1}}
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.searchBar}>
           <Ionicons name="search" size={18} color="#888780" />
           <TextInput
@@ -345,7 +355,7 @@ export default function FriendsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {backgroundColor: "#F1EFE8"},
+  container: {backgroundColor: "#F1EFE8", flex: 1},
   scrollContent: {paddingBottom: 100},
   errorText: {
     textAlign: "center",

@@ -1,9 +1,11 @@
+// TO DO: GRADIENT AT THE BOTTOM
+
 import {SectionList, StyleSheet, Text, View} from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
 import Svg, {Circle, Path} from "react-native-svg";
 import {useAuth} from "@/contexts/auth.context";
 import {useFocusEffect} from "expo-router";
-import {useCallback, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {Models, Query} from "react-native-appwrite";
 import {
   client,
@@ -13,6 +15,7 @@ import {
   tablesDB,
 } from "@/lib/appwrite";
 import {Avatar} from "@/components/Avatar";
+import { socket } from "@/lib/socket";
 
 function pluralize(
   count: number,
@@ -38,6 +41,45 @@ export default function HomeScreen() {
   );
 
   const {user} = useAuth();
+
+  useEffect(() => {
+    const handleOnline = (friendId: string) => {
+      console.log("ONLINE EVENT", friendId)
+      setFriendsProfiles((prev) =>
+        prev.map((profile) =>
+          friendId === profile.$id ? {...profile, online: true} : profile,
+        ),
+      );
+    };
+    const handleOffline = (friendId: string) => {
+      console.log("OFFLINE EVENT", friendId)
+      setFriendsProfiles((prev) =>
+        prev.map((profile) =>
+          friendId === profile.$id ? {...profile, online: false} : profile,
+        ),
+      );
+    };
+    const handleSetOnlineFriends = (onlineFriends: string[]) => {
+      console.log("ONLINE:", onlineFriends)
+      setFriendsProfiles((prev) =>
+        prev.map((profile) =>
+          onlineFriends.includes(profile.$id)
+            ? {...profile, online: true}
+            : {...profile, online: false},
+        ),
+      );
+    };
+
+    socket.on("friend.online", handleOnline);
+    socket.on("friend.offline", handleOffline);
+    socket.on("onlineFriends", handleSetOnlineFriends)
+
+    return () => {
+      socket.off("friend.online", handleOnline);
+      socket.off("friend.offline", handleOffline);
+      socket.off("onlineFriends", handleSetOnlineFriends)
+    };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -79,7 +121,7 @@ export default function HomeScreen() {
     } else if (1440 < gap && gap < 10080) {
       return `${Math.floor(gap / 1440)} д`;
     } else {
-      return "давно";
+      return `${Math.floor(gap / 10080)} н`;
     }
   };
 
@@ -103,6 +145,7 @@ export default function HomeScreen() {
       ),
     );
     setFriendsProfiles(profiles);
+    socket.emit("getOnlineFriends");
   };
 
   const showStatusSafely = (status: string, statusUpdatedAt: string) => {
@@ -209,6 +252,8 @@ export default function HomeScreen() {
                     size={44}
                   />
                 </View>
+                <View style={[styles.onlineDot, {backgroundColor: item.online ? "#28A745" : "#808080"}]}/>
+
               </View>
               <View style={styles.friendInfo}>
                 <Text style={styles.friendName}>{item.name as string}</Text>
@@ -396,4 +441,14 @@ const styles = StyleSheet.create({
     borderRadius: 3.5,
     backgroundColor: "#6E6E73",
   },
+  onlineDot: {
+    height: 12,
+    width: 12,
+    borderRadius: 999,
+    position: 'absolute',
+    left: 33,
+    bottom: 0,
+    borderWidth: 2,
+    borderColor: "#fff",
+  }
 });
