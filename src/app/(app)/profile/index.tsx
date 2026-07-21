@@ -1,3 +1,5 @@
+// TO DO : ONLINE DOT
+
 import {Avatar} from "@/components/Avatar";
 import {useAuth} from "@/contexts/auth.context";
 import {

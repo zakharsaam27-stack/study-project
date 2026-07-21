@@ -3,12 +3,12 @@
 
 import http from "http";
 import {Server} from "socket.io";
-import {verifyJWT} from "./appwrite";
 import {
   database_id,
   friendship_table_id,
   profiles_table_id,
   tablesDB,
+  verifyJWT,
 } from "./appwrite";
 import {Query} from "node-appwrite";
 
@@ -29,11 +29,11 @@ io.on("connection", async (socket) => {
     // connect
     const user = await verifyJWT(jwt);
 
-console.log("verified", user.$id);
+console.log("socket user", user.$id);
 
-onlineUsers.set(user.$id, socket.id);
 
-console.log("onlineUsers", [...onlineUsers.keys()]);
+
+    onlineUsers.set(user.$id, socket.id);
 
     const fetchFriendsProfiles = async () => {
       const fetchFriendListResult = await tablesDB.listRows({
@@ -44,6 +44,14 @@ console.log("onlineUsers", [...onlineUsers.keys()]);
           Query.equal("requesterId", user.$id),
         ],
       });
+
+console.log(
+  fetchFriendListResult.rows.map(r => ({
+    requesterId: r.requesterId,
+    addresseeId: r.addresseeId,
+    status: r.status,
+  }))
+);
 
       console.log(fetchFriendListResult.rows);
 
@@ -74,16 +82,15 @@ console.log("onlineUsers", [...onlineUsers.keys()]);
       socket.emit("onlineFriends", onlineFriends);
     };
     const profiles = await fetchFriendsProfiles();
-    
-    console.log("profiles", profiles.map(p => p.$id));
-console.log("onlineUsers", [...onlineUsers.keys()]);
-    
+
+    console.log(
+      "profiles",
+      profiles.map((p) => p.$id),
+    );
+    console.log("onlineUsers", [...onlineUsers.keys()]);
+
     for (const profile of profiles) {
-      
-console.log(
-  profile.$id,
-  onlineUsers.has(profile.$id)
-);
+      console.log(profile.$id, onlineUsers.has(profile.$id));
 
       if (onlineUsers.has(profile.$id)) {
         io.to(`user:${profile.$id}`).emit("friend.online", user.$id);

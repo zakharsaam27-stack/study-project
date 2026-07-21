@@ -1,7 +1,7 @@
 // TO DO: GRADIENT AT THE BOTTOM
 
 import {SectionList, StyleSheet, Text, View} from "react-native";
-import {SafeAreaView} from "react-native-safe-area-context";
+import {SafeAreaView} from "react-native";
 import Svg, {Circle, Path} from "react-native-svg";
 import {useAuth} from "@/contexts/auth.context";
 import {useFocusEffect} from "expo-router";
@@ -277,7 +277,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: {
-
+    flex: 1,
     backgroundColor: "#F1EFE8",
   },
   header: {
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: "#6E6E73",
+    backgroundColor: "#a0a0a0",
   },
   onlineDot: {
     height: 12,
@@ -450,5 +450,5 @@ const styles = StyleSheet.create({
     bottom: 0,
     borderWidth: 2,
     borderColor: "#fff",
-  }
+  },
 });

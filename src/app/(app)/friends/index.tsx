@@ -1,5 +1,6 @@
 // TO DO: OPEN PROFILE,
 // DELAY FIX, DISABLED STATE FOR ACCEPTING REQS WhiLE LOADING
+// SWIPE TO DELETE ON SEArCH
 
 import {Avatar} from "@/components/Avatar";
 import {useAuth} from "@/contexts/auth.context";
@@ -26,7 +27,8 @@ import {
 } from "react-native";
 import {Models, Query} from "react-native-appwrite";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
-import {SafeAreaView} from "react-native-safe-area-context";
+import {SafeAreaView} from "react-native";
+import { socket } from "@/lib/socket";
 
 export default function FriendsScreen() {
   console.log("FriendsScreen render");
@@ -45,6 +47,45 @@ export default function FriendsScreen() {
 
   const {width: windowWidth} = useWindowDimensions();
   const cardRowWidth = windowWidth - 36;
+
+  useEffect(() => {
+      const handleOnline = (friendId: string) => {
+        console.log("ONLINE EVENT", friendId)
+        setFriendsProfiles((prev) =>
+          prev.map((profile) =>
+            friendId === profile.$id ? {...profile, online: true} : profile,
+          ),
+        );
+      };
+      const handleOffline = (friendId: string) => {
+        console.log("OFFLINE EVENT", friendId)
+        setFriendsProfiles((prev) =>
+          prev.map((profile) =>
+            friendId === profile.$id ? {...profile, online: false} : profile,
+          ),
+        );
+      };
+      const handleSetOnlineFriends = (onlineFriends: string[]) => {
+        console.log("ONLINE:", onlineFriends)
+        setFriendsProfiles((prev) =>
+          prev.map((profile) =>
+            onlineFriends.includes(profile.$id)
+              ? {...profile, online: true}
+              : {...profile, online: false},
+          ),
+        );
+      };
+  
+      socket.on("friend.online", handleOnline);
+      socket.on("friend.offline", handleOffline);
+      socket.on("onlineFriends", handleSetOnlineFriends)
+  
+      return () => {
+        socket.off("friend.online", handleOnline);
+        socket.off("friend.offline", handleOffline);
+        socket.off("onlineFriends", handleSetOnlineFriends)
+      };
+    }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -160,6 +201,7 @@ export default function FriendsScreen() {
       ),
     );
     setFriendsProfiles(profiles);
+    socket.emit("getOnlineFriends")
   };
 
   const filteredFriends = friendsProfiles.filter(
@@ -224,6 +266,7 @@ console.log({
                       name={friend.name}
                       size={42}
                     />
+                    <View style={[styles.onlineDot, {backgroundColor: friend.online ? "#28A745" : "#808080"}]}/>
                   </View>
                   <View style={styles.friendInfo}>
                     <Text style={styles.friendName}>
@@ -316,6 +359,7 @@ console.log({
                                 name={friend.name}
                                 size={42}
                               />
+                              <View style={[styles.onlineDot, {backgroundColor: friend.online ? "#28A745" : "#808080"}]}/>
                             </View>
                           </View>
                           <View style={styles.friendInfo}>
@@ -519,6 +563,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 40,
+    paddingTop: 73
   },
   emptyIcon: {
     width: 108,
@@ -554,5 +599,15 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     alignItems: "center",
     paddingRight: 24,
+  },
+  onlineDot: {
+    height: 12,
+    width: 12,
+    borderRadius: 999,
+    position: 'absolute',
+    left: 33,
+    bottom: 0,
+    borderWidth: 2,
+    borderColor: "#fff",
   },
 });
