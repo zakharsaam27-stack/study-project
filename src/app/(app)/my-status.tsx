@@ -1,4 +1,4 @@
-// PLURAL ACCORDING TO GENDER, SLIDING ANIM
+// PLURAL ACCORDING TO GENDER
 
 import {useAuth} from "@/contexts/auth.context";
 import {database_id, profiles_table_id, tablesDB} from "@/lib/appwrite";

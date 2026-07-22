@@ -15,7 +15,7 @@ import {
   tablesDB,
 } from "@/lib/appwrite";
 import {Avatar} from "@/components/Avatar";
-import { socket } from "@/lib/socket";
+import {useSocket} from "@/contexts/socket.context";
 
 function pluralize(
   count: number,
@@ -39,52 +39,12 @@ export default function HomeScreen() {
   const [friendsProfiles, setFriendsProfiles] = useState<Models.DefaultRow[]>(
     [],
   );
-
+  const {onlineFriends} = useSocket();
   const {user} = useAuth();
-
-  useEffect(() => {
-    const handleOnline = (friendId: string) => {
-      console.log("ONLINE EVENT", friendId)
-      setFriendsProfiles((prev) =>
-        prev.map((profile) =>
-          friendId === profile.$id ? {...profile, online: true} : profile,
-        ),
-      );
-    };
-    const handleOffline = (friendId: string) => {
-      console.log("OFFLINE EVENT", friendId)
-      setFriendsProfiles((prev) =>
-        prev.map((profile) =>
-          friendId === profile.$id ? {...profile, online: false} : profile,
-        ),
-      );
-    };
-    const handleSetOnlineFriends = (onlineFriends: string[]) => {
-      console.log("ONLINE:", onlineFriends)
-      setFriendsProfiles((prev) =>
-        prev.map((profile) =>
-          onlineFriends.includes(profile.$id)
-            ? {...profile, online: true}
-            : {...profile, online: false},
-        ),
-      );
-    };
-
-    socket.on("friend.online", handleOnline);
-    socket.on("friend.offline", handleOffline);
-    socket.on("onlineFriends", handleSetOnlineFriends)
-
-    return () => {
-      socket.off("friend.online", handleOnline);
-      socket.off("friend.offline", handleOffline);
-      socket.off("onlineFriends", handleSetOnlineFriends)
-    };
-  }, []);
 
   useFocusEffect(
     useCallback(() => {
       fetchFriendsProfiles();
-
       const unsubscribeFriends = client.subscribe(
         `databases.${database_id}.tables.${friendship_table_id}.rows`,
         () => {
@@ -144,17 +104,18 @@ export default function HomeScreen() {
         }),
       ),
     );
-    setFriendsProfiles(profiles);
-    socket.emit("getOnlineFriends");
+    setFriendsProfiles(profiles)
   };
 
   const showStatusSafely = (status: string, statusUpdatedAt: string) => {
     if (formattedStatusUpdatedAt(new Date(statusUpdatedAt)) === "Только что") {
-      if (status.length === 25) {
+      if (status.length >= 25) {
         return status.slice(0, 21) + "...";
+      } else {
+        return status;
       }
     } else {
-      return status;
+      return status
     }
   };
 
@@ -216,10 +177,10 @@ export default function HomeScreen() {
         </View>
       ) : (
         <SectionList
-        showsVerticalScrollIndicator={false}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.list}  
-        sections={sections}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.list}
+          sections={sections}
           keyExtractor={(item) => item.$id}
           renderSectionHeader={({section}) => (
             <View style={styles.freeRow}>
@@ -252,8 +213,12 @@ export default function HomeScreen() {
                     size={44}
                   />
                 </View>
-                <View style={[styles.onlineDot, {backgroundColor: item.online ? "#28A745" : "#808080"}]}/>
-
+                <View
+                  style={[
+                    styles.onlineDot,
+                    {backgroundColor: onlineFriends.has(item.$id) ? "#28A745" : "#808080"},
+                  ]}
+                />
               </View>
               <View style={styles.friendInfo}>
                 <Text style={styles.friendName}>{item.name as string}</Text>
@@ -300,7 +265,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     gap: 6,
     backgroundColor: "#F1EFE8",
-    paddingVertical: 8
+    paddingVertical: 8,
   },
   freeText: {
     fontSize: 14,
@@ -323,7 +288,7 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: 18,
     gap: 4,
-    paddingBottom: 10
+    paddingBottom: 10,
   },
   friendCard: {
     backgroundColor: "#FFFFFF",
@@ -334,7 +299,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    marginBottom: 10
+    marginBottom: 10,
   },
   avatarWrapper: {
     position: "relative",
@@ -445,7 +410,7 @@ const styles = StyleSheet.create({
     height: 12,
     width: 12,
     borderRadius: 999,
-    position: 'absolute',
+    position: "absolute",
     left: 33,
     bottom: 0,
     borderWidth: 2,

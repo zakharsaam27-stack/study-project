@@ -52,7 +52,8 @@ export default function AppTabs() {
   const isHiddenRoute =
     pathName === "/friends/requests" ||
     pathName === "/friends/add-friend" ||
-    pathName === "/profile/edit-profile";
+    pathName === "/profile/edit-profile" ||
+    pathName.startsWith("/friendsProfile/");
 
   const tabBarStyle = {
     backgroundColor: colors.background,
@@ -62,7 +63,7 @@ export default function AppTabs() {
   };
 
   const isFriendReqs = (requests?.length ?? 0) > 0;
-  const reqCount = requests?.length
+  const reqCount = requests?.length;
 
   return (
     <Tabs
@@ -137,6 +138,12 @@ export default function AppTabs() {
               color={color}
             />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="friendsProfile"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

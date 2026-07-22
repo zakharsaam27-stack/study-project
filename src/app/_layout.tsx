@@ -1,4 +1,5 @@
 import {AuthProvider, useAuth} from "@/contexts/auth.context";
+import {SocketProvider} from "@/contexts/socket.context";
 import {HideTabBarProvider} from "@/contexts/tabbar.context";
 import {Stack} from "expo-router";
 import {useColorScheme} from "react-native";
@@ -9,7 +10,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{flex: 1}}>
       <HideTabBarProvider>
         <AuthProvider>
-          <RootNavigator />
+          <SocketProvider>
+            <RootNavigator />
+          </SocketProvider>
         </AuthProvider>
       </HideTabBarProvider>
     </GestureHandlerRootView>

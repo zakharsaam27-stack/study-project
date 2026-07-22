@@ -28,11 +28,9 @@ import {
 import {Models, Query} from "react-native-appwrite";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import {SafeAreaView} from "react-native";
-import { socket } from "@/lib/socket";
+import {useSocket} from "@/contexts/socket.context";
 
 export default function FriendsScreen() {
-  console.log("FriendsScreen render");
-  
   const [requests, setRequests] = useState<Models.DefaultRow[]>([]);
   const [friendList, setFriendList] = useState<Models.DefaultRow[]>([]);
   const [friendsProfiles, setFriendsProfiles] = useState<Models.DefaultRow[]>(
@@ -40,52 +38,11 @@ export default function FriendsScreen() {
   );
   const [searchFriend, setSearchFriend] = useState("");
   const [error, setError] = useState("");
-
-  const {user} = useAuth();
-
   const router = useRouter();
-
+  const {user} = useAuth();
+  const {onlineFriends} = useSocket();
   const {width: windowWidth} = useWindowDimensions();
   const cardRowWidth = windowWidth - 36;
-
-  useEffect(() => {
-      const handleOnline = (friendId: string) => {
-        console.log("ONLINE EVENT", friendId)
-        setFriendsProfiles((prev) =>
-          prev.map((profile) =>
-            friendId === profile.$id ? {...profile, online: true} : profile,
-          ),
-        );
-      };
-      const handleOffline = (friendId: string) => {
-        console.log("OFFLINE EVENT", friendId)
-        setFriendsProfiles((prev) =>
-          prev.map((profile) =>
-            friendId === profile.$id ? {...profile, online: false} : profile,
-          ),
-        );
-      };
-      const handleSetOnlineFriends = (onlineFriends: string[]) => {
-        console.log("ONLINE:", onlineFriends)
-        setFriendsProfiles((prev) =>
-          prev.map((profile) =>
-            onlineFriends.includes(profile.$id)
-              ? {...profile, online: true}
-              : {...profile, online: false},
-          ),
-        );
-      };
-  
-      socket.on("friend.online", handleOnline);
-      socket.on("friend.offline", handleOffline);
-      socket.on("onlineFriends", handleSetOnlineFriends)
-  
-      return () => {
-        socket.off("friend.online", handleOnline);
-        socket.off("friend.offline", handleOffline);
-        socket.off("onlineFriends", handleSetOnlineFriends)
-      };
-    }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -201,7 +158,6 @@ export default function FriendsScreen() {
       ),
     );
     setFriendsProfiles(profiles);
-    socket.emit("getOnlineFriends")
   };
 
   const filteredFriends = friendsProfiles.filter(
@@ -219,12 +175,6 @@ export default function FriendsScreen() {
       return status;
     }
   };
-
-console.log({
-  requests: requests.length,
-  friendList: friendList.length,
-  friendsProfiles: friendsProfiles.length,
-});
 
   return (
     <SafeAreaView style={styles.container}>
@@ -266,7 +216,16 @@ console.log({
                       name={friend.name}
                       size={42}
                     />
-                    <View style={[styles.onlineDot, {backgroundColor: friend.online ? "#28A745" : "#808080"}]}/>
+                    <View
+                      style={[
+                        styles.onlineDot,
+                        {
+                          backgroundColor: onlineFriends.has(friend.$id)
+                            ? "#28A745"
+                            : "#808080",
+                        },
+                      ]}
+                    />
                   </View>
                   <View style={styles.friendInfo}>
                     <Text style={styles.friendName}>
@@ -337,7 +296,16 @@ console.log({
                     (r) => r.addresseeId === friend.$id,
                   );
                   return (
-                    <View key={friend.$id} style={styles.friendCardRow}>
+                    <Pressable
+                      key={friend.$id}
+                      style={styles.friendCardRow}
+                      onPress={() =>
+                        router.push({
+                          pathname: "/(app)/friendsProfile/[id]",
+                          params: {id: friend.$id},
+                        })
+                      }
+                    >
                       <Swipeable
                         renderRightActions={() =>
                           renderRightActions(friendShipRow?.$id ?? "")
@@ -359,7 +327,18 @@ console.log({
                                 name={friend.name}
                                 size={42}
                               />
-                              <View style={[styles.onlineDot, {backgroundColor: friend.online ? "#28A745" : "#808080"}]}/>
+                              <View
+                                style={[
+                                  styles.onlineDot,
+                                  {
+                                    backgroundColor: onlineFriends.has(
+                                      friend.$id,
+                                    )
+                                      ? "#28A745"
+                                      : "#808080",
+                                  },
+                                ]}
+                              />
                             </View>
                           </View>
                           <View style={styles.friendInfo}>
@@ -382,7 +361,7 @@ console.log({
                           </View>
                         </View>
                       </Swipeable>
-                    </View>
+                    </Pressable>
                   );
                 })}
                 <Text style={styles.hint}>
@@ -563,7 +542,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 40,
-    paddingTop: 73
+    paddingTop: 73,
   },
   emptyIcon: {
     width: 108,
@@ -604,7 +583,7 @@ const styles = StyleSheet.create({
     height: 12,
     width: 12,
     borderRadius: 999,
-    position: 'absolute',
+    position: "absolute",
     left: 33,
     bottom: 0,
     borderWidth: 2,

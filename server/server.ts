@@ -28,11 +28,6 @@ io.on("connection", async (socket) => {
   try {
     // connect
     const user = await verifyJWT(jwt);
-
-console.log("socket user", user.$id);
-
-
-
     onlineUsers.set(user.$id, socket.id);
 
     const fetchFriendsProfiles = async () => {
@@ -44,16 +39,6 @@ console.log("socket user", user.$id);
           Query.equal("requesterId", user.$id),
         ],
       });
-
-console.log(
-  fetchFriendListResult.rows.map(r => ({
-    requesterId: r.requesterId,
-    addresseeId: r.addresseeId,
-    status: r.status,
-  }))
-);
-
-      console.log(fetchFriendListResult.rows);
 
       const profiles = await Promise.all(
         fetchFriendListResult.rows.map((friend) =>
@@ -78,16 +63,9 @@ console.log(
           onlineFriends.push(profile.$id);
         }
       }
-      console.log("sending", onlineFriends);
       socket.emit("onlineFriends", onlineFriends);
     };
     const profiles = await fetchFriendsProfiles();
-
-    console.log(
-      "profiles",
-      profiles.map((p) => p.$id),
-    );
-    console.log("onlineUsers", [...onlineUsers.keys()]);
 
     for (const profile of profiles) {
       console.log(profile.$id, onlineUsers.has(profile.$id));
@@ -102,12 +80,20 @@ console.log(
     // disconnect
     socket.on("disconnect", async () => {
       const profiles = await fetchFriendsProfiles();
-      onlineUsers.delete(user.$id);
       for (const profile of profiles) {
         if (onlineUsers.has(profile.$id)) {
           io.to(`user:${profile.$id}`).emit("friend.offline", user.$id);
         }
       }
+      onlineUsers.delete(user.$id);
+      tablesDB.updateRow({
+        databaseId: database_id,
+        tableId: profiles_table_id,
+        rowId: user.$id,
+        data: {
+          lastSeen: new Date().toISOString()
+        },
+      });
     });
   } catch (err) {
     socket.disconnect();
