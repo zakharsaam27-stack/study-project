@@ -53,7 +53,7 @@ export default function AppTabs() {
     pathName === "/friends/requests" ||
     pathName === "/friends/add-friend" ||
     pathName === "/profile/edit-profile" ||
-    pathName.startsWith("/friendsProfile/");
+    pathName.startsWith("/friends/profile");
 
   const tabBarStyle = {
     backgroundColor: colors.background,
@@ -138,12 +138,6 @@ export default function AppTabs() {
               color={color}
             />
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="friendsProfile"
-        options={{
-          href: null,
         }}
       />
     </Tabs>

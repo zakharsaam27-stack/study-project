@@ -1,6 +1,7 @@
 // TO DO: OPEN PROFILE,
 // DELAY FIX, DISABLED STATE FOR ACCEPTING REQS WhiLE LOADING
-// SWIPE TO DELETE ON SEArCH
+// SWIPE TO DELETE ON SEArCH,
+// W x25 FIX
 
 import {Avatar} from "@/components/Avatar";
 import {useAuth} from "@/contexts/auth.context";
@@ -15,7 +16,7 @@ import {
 } from "@/lib/appwrite";
 import {FontAwesome6, Ionicons} from "@expo/vector-icons";
 import {useFocusEffect, useRouter} from "expo-router";
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useState} from "react";
 import {
   Pressable,
   ScrollView,
@@ -209,7 +210,19 @@ export default function FriendsScreen() {
           <View style={styles.searchResult}>
             {filteredFriends.length !== 0 ? (
               filteredFriends.map((friend) => (
-                <View key={friend.$id} style={styles.friendCard}>
+                <Pressable
+                  key={friend.$id}
+                  style={({pressed}) => [
+                    styles.friendCard,
+                    pressed && {opacity: 0.7},
+                  ]}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(app)/friends/profile/[id]",
+                      params: {id: friend.$Id},
+                    })
+                  }
+                >
                   <View style={styles.avatar}>
                     <Avatar
                       source={friend.avatarURL ? {uri: friend.avatarURL} : null}
@@ -236,16 +249,16 @@ export default function FriendsScreen() {
                     </Text>
                   </View>
                   <View style={[styles.statusPill]}>
-                    <Text style={[styles.statusText]}>
+                    <Text
+                      style={[styles.statusText]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
                       {friend.statusEmoji as string}
-                      {showStatusSafely(
-                        friend.nickname,
-                        friend.name,
-                        friend.statusText,
-                      )}
+                      {friend.statusText}
                     </Text>
                   </View>
-                </View>
+                </Pressable>
               ))
             ) : (
               <View style={styles.searchEmptyState}>
@@ -298,10 +311,13 @@ export default function FriendsScreen() {
                   return (
                     <Pressable
                       key={friend.$id}
-                      style={styles.friendCardRow}
+                      style={({pressed}) => [
+                        styles.friendCardRow,
+                        pressed && {opacity: 0.7},
+                      ]}
                       onPress={() =>
                         router.push({
-                          pathname: "/(app)/friendsProfile/[id]",
+                          pathname: "/(app)/friends/profile/[id]",
                           params: {id: friend.$id},
                         })
                       }
@@ -350,13 +366,12 @@ export default function FriendsScreen() {
                             </Text>
                           </View>
                           <View style={[styles.statusPill]}>
-                            <Text style={[styles.statusText]}>
-                              {friend.statusEmoji as string}
-                              {showStatusSafely(
-                                friend.nickname,
-                                friend.name,
-                                friend.statusText,
-                              )}
+                            <Text
+                              style={[styles.statusText]}
+                              numberOfLines={1}
+                              ellipsizeMode="tail"
+                            >
+                              {`${friend.statusEmoji} ${friend.statusText}`}
                             </Text>
                           </View>
                         </View>
@@ -519,6 +534,8 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 9,
     paddingVertical: 3,
+    flexShrink: 1,
+    alignSelf: "center",
   },
   statusPillBusy: {
     backgroundColor: "#F1EFE8",

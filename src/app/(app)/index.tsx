@@ -1,10 +1,10 @@
 // TO DO: GRADIENT AT THE BOTTOM
 
-import {SectionList, StyleSheet, Text, View} from "react-native";
+import {Pressable, SectionList, StyleSheet, Text, View} from "react-native";
 import {SafeAreaView} from "react-native";
 import Svg, {Circle, Path} from "react-native-svg";
 import {useAuth} from "@/contexts/auth.context";
-import {useFocusEffect} from "expo-router";
+import {useFocusEffect, useRouter} from "expo-router";
 import {useCallback, useEffect, useState} from "react";
 import {Models, Query} from "react-native-appwrite";
 import {
@@ -41,6 +41,7 @@ export default function HomeScreen() {
   );
   const {onlineFriends} = useSocket();
   const {user} = useAuth();
+  const router = useRouter();
 
   useFocusEffect(
     useCallback(() => {
@@ -104,19 +105,7 @@ export default function HomeScreen() {
         }),
       ),
     );
-    setFriendsProfiles(profiles)
-  };
-
-  const showStatusSafely = (status: string, statusUpdatedAt: string) => {
-    if (formattedStatusUpdatedAt(new Date(statusUpdatedAt)) === "Только что") {
-      if (status.length >= 25) {
-        return status.slice(0, 21) + "...";
-      } else {
-        return status;
-      }
-    } else {
-      return status
-    }
+    setFriendsProfiles(profiles);
   };
 
   const sections = [
@@ -204,7 +193,18 @@ export default function HomeScreen() {
             </View>
           )}
           renderItem={({item, section}) => (
-            <View style={styles.friendCard}>
+            <Pressable
+              style={({pressed}) => [
+                styles.friendCard,
+                pressed && {opacity: 0.7},
+              ]}
+              onPress={() =>
+                router.push({
+                  pathname: "/(app)/friends/profile/[id]",
+                  params: {id: item.$id},
+                })
+              }
+            >
               <View style={styles.avatarWrapper}>
                 <View style={styles.avatar}>
                   <Avatar
@@ -216,23 +216,31 @@ export default function HomeScreen() {
                 <View
                   style={[
                     styles.onlineDot,
-                    {backgroundColor: onlineFriends.has(item.$id) ? "#28A745" : "#808080"},
+                    {
+                      backgroundColor: onlineFriends.has(item.$id)
+                        ? "#28A745"
+                        : "#808080",
+                    },
                   ]}
                 />
               </View>
               <View style={styles.friendInfo}>
                 <Text style={styles.friendName}>{item.name as string}</Text>
                 <View style={section.pillStyle}>
-                  <Text style={section.textStyle}>
+                  <Text
+                    style={section.textStyle}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
                     {item.statusEmoji}
-                    {showStatusSafely(item.statusText, item.statusUpdatedAt)}
+                    {item.statusText}
                   </Text>
                 </View>
               </View>
               <Text style={styles.timeText}>
                 {formattedStatusUpdatedAt(new Date(item.statusUpdatedAt))}
               </Text>
-            </View>
+            </Pressable>
           )}
         />
       )}

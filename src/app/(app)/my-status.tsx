@@ -695,7 +695,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#6BCF9A",
   },
   statusToggleDotBusy: {
-    backgroundColor: "#6E6E73",
+    backgroundColor: "#a0a0a0",
   },
   statusToggleText: {
     fontSize: 14,
