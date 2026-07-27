@@ -33,7 +33,8 @@ function RootNavigator() {
         <Stack.Screen name="(auth)" options={{headerShown: false}} />
       </Stack.Protected>
       <Stack.Protected guard={!!user}>
-        <Stack.Screen name="(app)" options={{headerShown: false}} />
+        <Stack.Screen name="(tabs)" options={{headerShown: false}} />
+        <Stack.Screen name="friend-profile" options={{headerShown: false}} />
       </Stack.Protected>
     </Stack>
   );

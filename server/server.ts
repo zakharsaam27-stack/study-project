@@ -1,5 +1,4 @@
 // TO DO: STABLE CONNECTION FROM MULTIPLE DEVICES,
-// LAST SEEN
 
 import http from "http";
 import {Server} from "socket.io";
@@ -17,6 +16,10 @@ const io = new Server(server);
 const onlineUsers = new Map<string, string>();
 
 server.listen(3500);
+
+console.log('-'.repeat(28))
+console.log('-'.repeat(5), 'SERVER CONNECTED', '-'.repeat(5))
+console.log('-'.repeat(28))
 
 io.on("connection", async (socket) => {
   const jwt = socket.handshake.auth.jwt;
@@ -68,8 +71,6 @@ io.on("connection", async (socket) => {
     const profiles = await fetchFriendsProfiles();
 
     for (const profile of profiles) {
-      console.log(profile.$id, onlineUsers.has(profile.$id));
-
       if (onlineUsers.has(profile.$id)) {
         io.to(`user:${profile.$id}`).emit("friend.online", user.$id);
       }
@@ -91,7 +92,7 @@ io.on("connection", async (socket) => {
         tableId: profiles_table_id,
         rowId: user.$id,
         data: {
-          lastSeen: new Date().toISOString()
+          lastSeen: new Date()
         },
       });
     });

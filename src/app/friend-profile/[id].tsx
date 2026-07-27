@@ -8,6 +8,7 @@ import {Pressable, SafeAreaView, StyleSheet, Text, View} from "react-native";
 import {Models} from "react-native-appwrite";
 import {formatDistanceToNow, format} from "date-fns";
 import {ru} from "date-fns/locale";
+import {socket} from "@/lib/socket";
 
 function formatRelativeTime(date: Date) {
   return formatDistanceToNow(date, {addSuffix: true, locale: ru});
@@ -20,19 +21,18 @@ function formatJoinedDate(date: Date) {
 
 export default function FriendProfileScreen() {
   const [profile, setProfile] = useState<Models.DefaultRow | null>(null);
+  const [lastSeen, setLastSeen] = useState<Date>(new Date());
+  const [isUpdating, setIsUpdating] = useState(false)
   const {id} = useLocalSearchParams();
+  const friendId = Array.isArray(id) ? id[0] : id;
   const {onlineFriends} = useSocket();
-
-  useEffect(() => {
-    fetchProfile();
-  }, [id]);
 
   const fetchProfile = async () => {
     try {
       const row = await tablesDB.getRow({
         databaseId: database_id,
         tableId: profiles_table_id,
-        rowId: id as string,
+        rowId: friendId,
       });
       setProfile(row);
     } catch (err) {
@@ -40,8 +40,45 @@ export default function FriendProfileScreen() {
     }
   };
 
+  const fetchLastSeen = async (rowId: string) => {
+    const fetchResult = await tablesDB.getRow({
+      databaseId: database_id,
+      tableId: profiles_table_id,
+      rowId: rowId,
+    });
+    setLastSeen(fetchResult.lastSeen);
+  };
+
+  const delay = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
+
+  useEffect(() => {
+    fetchProfile();
+
+    if (onlineFriends.has(friendId)) {
+      return;
+    } else {
+      fetchLastSeen(friendId);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    const handleFriendOffline = async (userId: string) => {
+      if (userId !== friendId) return;
+
+      setIsUpdating(true)
+      await delay(1000)
+      await fetchLastSeen(userId);
+      setIsUpdating(false)
+    };
+    socket.on("friend.offline", handleFriendOffline);
+
+    return () => {
+      socket.off("friend.offline", handleFriendOffline);
+    };
+  }, []);
+
   if (!profile) {
-    console.log("something went wrong when loading users profile");
     return;
   }
 
@@ -73,7 +110,13 @@ export default function FriendProfileScreen() {
         <Text style={styles.name}>{profile.name}</Text>
         <View>
           <View>
-            {onlineFriends.has(profile.$id) ? (
+            {isUpdating ? (
+              <View style={styles.onlineWrapper}>
+                <View style={styles.freeDot} />
+                <Text style={styles.onlineText}>В сети</Text>
+              </View>
+            ) : (
+            onlineFriends.has(profile.$id) ? (
               <View style={styles.onlineWrapper}>
                 <View style={styles.freeDot} />
                 <Text style={styles.onlineText}>В сети</Text>
@@ -82,10 +125,10 @@ export default function FriendProfileScreen() {
               <View style={styles.onlineWrapper}>
                 <View style={styles.busyDot} />
                 <Text style={styles.offlineText}>
-                  {formatLastSeen(profile.lastSeen)}
+                  {formatLastSeen(lastSeen)}
                 </Text>
               </View>
-            )}
+            ))}
           </View>
         </View>
       </View>
@@ -189,6 +232,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 18,
     gap: 4,
+    marginTop: 40,
   },
   avatarWrapper: {
     position: "relative",
@@ -216,8 +260,8 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   emojiBox: {
-    width: 42,
-    height: 42,
+    width: 46,
+    height: 46,
     borderRadius: 999,
     backgroundColor: "#FFE3D6",
     alignItems: "center",
@@ -247,7 +291,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: "#6BCF9A",
+    backgroundColor: "#28A745",
   },
   busyDot: {
     width: 7,
@@ -256,7 +300,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#a0a0a0",
   },
   onlineText: {
-    color: "#6BCF9A",
+    color: "#28A745",
     paddingHorizontal: 4,
     fontWeight: "600",
   },

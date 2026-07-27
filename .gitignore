@@ -45,3 +45,6 @@ example
 
 # server
 /server
+
+appwrite.ts
+socket.ts

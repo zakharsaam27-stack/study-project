@@ -1,5 +1,4 @@
 import {socket} from "@/lib/socket";
-import {Models} from "node-appwrite";
 import React, {createContext, useContext, useEffect, useState} from "react";
 
 type SocketContextType = {
@@ -11,7 +10,7 @@ const SocketContext = createContext<SocketContextType | undefined>(undefined);
 export function SocketProvider({children}: {children: React.ReactNode}) {
   const [onlineFriends, setOnlineFriends] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
+  useEffect(() => {    
     socket.emit("getOnlineFriends");
 
     socket.on("friend.online", handleFriendOnline);
@@ -29,18 +28,18 @@ export function SocketProvider({children}: {children: React.ReactNode}) {
     setOnlineFriends(new Set(data));
   };
   const handleFriendOnline = (userId: string) => {
-    setOnlineFriends(prev => {
-      const next = new Set(prev)
-      next.add(userId)
-      return next
-    })
+    setOnlineFriends((prev) => {
+      const next = new Set(prev);
+      next.add(userId);
+      return next;
+    });
   };
-  const handleFriendOffline = (userId: string) => {
-    setOnlineFriends(prev => {
-      const next = new Set(prev)
-      next.delete(userId)
-      return next
-    })
+  const handleFriendOffline = async (userId: string) => {
+    setOnlineFriends((prev) => {
+      const next = new Set(prev);
+      next.delete(userId);
+      return next;
+    });
   };
 
   return (

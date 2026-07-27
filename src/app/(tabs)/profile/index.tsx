@@ -1,5 +1,3 @@
-// TO DO : ONLINE DOT
-
 import {Avatar} from "@/components/Avatar";
 import {useAuth} from "@/contexts/auth.context";
 import {
@@ -80,7 +78,7 @@ export default function ProfileScreen() {
 
       <Pressable
         style={({pressed}) => [styles.editButton, pressed && {opacity: 0.7}]}
-        onPress={() => router.push("/(app)/profile/edit-profile")}
+        onPress={() => router.push("/(tabs)/profile/edit-profile")}
       >
         <Ionicons name="create-outline" size={18} color="#fff" />
         <Text style={styles.editButtonText}>Редактировать профиль</Text>
@@ -91,7 +89,7 @@ export default function ProfileScreen() {
           <View style={styles.statusLeft}>
             <Pressable
               style={({pressed}) => [pressed && {opacity: 0.7}]}
-              onPress={() => router.replace("/(app)/my-status")}
+              onPress={() => router.replace("/(tabs)/my-status")}
             >
               <View style={styles.emojiBox}>
                 <Text style={styles.emojiText}>{myProfile.statusEmoji}</Text>
@@ -99,7 +97,7 @@ export default function ProfileScreen() {
             </Pressable>
             <Pressable
               style={({pressed}) => [pressed && {opacity: 0.7}]}
-              onPress={() => router.replace("/(app)/my-status")}
+              onPress={() => router.replace("/(tabs)/my-status")}
             >
               <View>
                 <Text style={styles.statusLabel}>МОЙ СТАТУС</Text>
@@ -109,7 +107,7 @@ export default function ProfileScreen() {
           </View>
           <Pressable
             style={({pressed}) => [pressed && {opacity: 0.7}]}
-            onPress={() => router.replace("/(app)/friends")}
+            onPress={() => router.replace("/(tabs)/friends")}
           >
             <Text style={styles.friendCountText}>Друзей: {friendCount}</Text>
           </Pressable>

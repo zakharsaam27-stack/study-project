@@ -58,6 +58,17 @@ export default function HomeScreen() {
           fetchFriendsProfiles();
         },
       );
+
+friendsProfiles.map((friend) => {
+    if (onlineFriends.has(friend.$id)) {
+      console.log(`user ${friend.nickname}: online`)
+    } else {
+      console.log(`user ${friend.nickname}: offline`)
+    }
+  })
+
+
+
       return () => {
         unsubscribeFriends();
         unsubscribeProfiles();
@@ -200,7 +211,7 @@ export default function HomeScreen() {
               ]}
               onPress={() =>
                 router.push({
-                  pathname: "/(app)/friends/profile/[id]",
+                  pathname: "/friend-profile/[id]",
                   params: {id: item.$id},
                 })
               }

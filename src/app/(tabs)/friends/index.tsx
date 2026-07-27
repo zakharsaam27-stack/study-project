@@ -1,6 +1,5 @@
-// TO DO: OPEN PROFILE,
-// DELAY FIX, DISABLED STATE FOR ACCEPTING REQS WhiLE LOADING
-// SWIPE TO DELETE ON SEArCH,
+// TO DO: DELAY FIX, DISABLED STATE FOR
+// ACCEPTING REQS WhiLE LOADING,
 // W x25 FIX
 
 import {Avatar} from "@/components/Avatar";
@@ -185,7 +184,7 @@ export default function FriendsScreen() {
         </Text>
         <Pressable
           style={({pressed}) => [styles.addButton, pressed && {opacity: 0.7}]}
-          onPress={() => router.push("/(app)/friends/add-friend")}
+          onPress={() => router.push("/(tabs)/friends/add-friend")}
         >
           <Ionicons name="add" size={16} color="#fff" />
           <Text style={styles.addButtonText}>Добавить</Text>
@@ -209,57 +208,76 @@ export default function FriendsScreen() {
         {searchFriend ? (
           <View style={styles.searchResult}>
             {filteredFriends.length !== 0 ? (
-              filteredFriends.map((friend) => (
-                <Pressable
-                  key={friend.$id}
-                  style={({pressed}) => [
-                    styles.friendCard,
-                    pressed && {opacity: 0.7},
-                  ]}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(app)/friends/profile/[id]",
-                      params: {id: friend.$Id},
-                    })
-                  }
-                >
-                  <View style={styles.avatar}>
-                    <Avatar
-                      source={friend.avatarURL ? {uri: friend.avatarURL} : null}
-                      name={friend.name}
-                      size={42}
-                    />
-                    <View
-                      style={[
-                        styles.onlineDot,
-                        {
-                          backgroundColor: onlineFriends.has(friend.$id)
-                            ? "#28A745"
-                            : "#808080",
-                        },
-                      ]}
-                    />
-                  </View>
-                  <View style={styles.friendInfo}>
-                    <Text style={styles.friendName}>
-                      {friend.name as string}
-                    </Text>
-                    <Text style={styles.friendNickname}>
-                      @{friend.nickname as string}
-                    </Text>
-                  </View>
-                  <View style={[styles.statusPill]}>
-                    <Text
-                      style={[styles.statusText]}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
+              filteredFriends.map((friend) => {
+                const friendShipRow = friendList.find(
+                  (r) => r.addresseeId === friend.$id,
+                );
+                return (
+                  <Pressable
+                    key={friend.$id}
+                    style={({pressed}) => [
+                      styles.friendCardRow,
+                      pressed && {opacity: 0.7},
+                    ]}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/friend-profile/[id]",
+                        params: {id: friend.$id},
+                      })
+                    }
+                  >
+                    <Swipeable
+                      renderRightActions={() =>
+                        renderRightActions(friendShipRow?.$id ?? "")
+                      }
+                      rightThreshold={44}
+                      overshootRight={false}
                     >
-                      {friend.statusEmoji as string}
-                      {friend.statusText}
-                    </Text>
-                  </View>
-                </Pressable>
-              ))
+                      <View
+                        style={[styles.friendCard, styles.friendCardNoMargin]}
+                      >
+                        <View style={styles.avatar}>
+                          <Avatar
+                            source={
+                              friend.avatarURL ? {uri: friend.avatarURL} : null
+                            }
+                            name={friend.name}
+                            size={42}
+                          />
+                          <View
+                            style={[
+                              styles.onlineDot,
+                              {
+                                backgroundColor: onlineFriends.has(friend.$id)
+                                  ? "#28A745"
+                                  : "#808080",
+                              },
+                            ]}
+                          />
+                        </View>
+                        <View style={styles.friendInfo}>
+                          <Text style={styles.friendName}>
+                            {friend.name as string}
+                          </Text>
+                          <Text style={styles.friendNickname}>
+                            @{friend.nickname as string}
+                          </Text>
+                        </View>
+                        <View style={[styles.statusPill]}>
+                          <Text
+                            style={[styles.statusText]}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {friend.statusEmoji as string}
+                            {friend.statusText}
+                          </Text>
+                        </View>
+                      </View>
+                    </Swipeable>
+                  </Pressable>
+                );
+              })
             ) : (
               <View style={styles.searchEmptyState}>
                 <Text style={styles.searchEmptyText}>Ничего не найдено</Text>
@@ -273,7 +291,7 @@ export default function FriendsScreen() {
                 styles.requestsCard,
                 pressed && {opacity: 0.7},
               ]}
-              onPress={() => router.push("/(app)/friends/requests")}
+              onPress={() => router.push("/(tabs)/friends/requests")}
             >
               <View style={styles.requestsIcon}>
                 <Ionicons name="person-add" size={18} color="#fff" />
@@ -317,7 +335,7 @@ export default function FriendsScreen() {
                       ]}
                       onPress={() =>
                         router.push({
-                          pathname: "/(app)/friends/profile/[id]",
+                          pathname: "/friend-profile/[id]",
                           params: {id: friend.$id},
                         })
                       }
